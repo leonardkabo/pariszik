@@ -372,8 +372,8 @@ async function initializeMegaForAdmin() {
     try {
         // Dans une version réelle, vous récupéreriez les identifiants depuis une source sécurisée
         // Comme Firebase ou un backend sécurisé
-        const email = 'admin@pariszik.com'; // À remplacer par les vraies informations
-        const password = 'admin_password'; // À remplacer par les vraies informations
+        const email = 'leonardkabo32@gmail.com'; // À remplacer par les vraies informations
+        const password = 'pariszik@2025'; // À remplacer par les vraies informations
         
         await megaIntegration.initialize(email, password);
         console.log('MEGA initialisé pour l\'administrateur');

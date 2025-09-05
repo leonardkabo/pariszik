@@ -7,12 +7,12 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-  authDomain: "pariszik-6ced1.firebaseapp.com",
-  projectId: "pariszik-6ced1",
-  storageBucket: "pariszik-6ced1.firebasestorage.app",
-  messagingSenderId: "1065971112198",
-  appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
+    apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "pariszik-6ced1.firebaseapp.com",
+    projectId: process.env.FIREBASE_PROJECT_ID || "pariszik-6ced1",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "pariszik-6ced1.firebasestorage.app",
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "1065971112198",
+    appId: process.env.FIREBASE_APP_ID || "1:1065971112198:web:d997951efedb2c6bc3a687"
 };
 
 
