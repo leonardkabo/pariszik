@@ -1,219 +1,223 @@
-// Configuration et initialisation Firebase pour ParisZik
+// Gestion améliorée de l'authentification pour ParisZik
 
-// Définir la configuration Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-    authDomain: "pariszik-6ced1.firebaseapp.com",
-    projectId: "pariszik-6ced1",
-    storageBucket: "pariszik-6ced1.firebasestorage.app",
-    messagingSenderId: "1065971112198",
-    appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
-};
-
-// Initialiser Firebase
-let firebaseApp;
-let auth;
-let db;
-let storage;
-
-try {
-    // Vérifier si Firebase est déjà initialisé
-    if (!firebase.apps || firebase.apps.length === 0) {
-        firebaseApp = firebase.initializeApp(firebaseConfig);
-        console.log('Firebase initialisé avec succès');
-    } else {
-        firebaseApp = firebase.app();
-        console.log('Firebase déjà initialisé');
+class ParisZikAuth {
+    constructor() {
+        this.initialized = false;
+        this.services = null;
     }
     
-    // Initialiser les services Firebase
-    auth = firebase.auth();
-    db = firebase.firestore();
-    storage = firebase.storage();
-    
-    // Configurer Firestore pour gérer les cas offline
-    db.settings({
-        ignoreUndefinedProperties: true
-    });
-    
-    // Activer la persistance offline pour Firestore
-    db.enablePersistence()
-        .catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn('La persistance multiple est désactivée');
-            } else if (err.code == 'unimplemented') {
-                console.warn('La persistance n\'est pas disponible sur ce navigateur');
+    // Initialiser l'authentification
+    async initialize() {
+        try {
+            // Attendre que l'initialisation soit terminée
+            if (!window.ParisZikInit) {
+                throw new Error('Initialisation ParisZik non disponible');
             }
-        });
-    
-    console.log('Services Firebase initialisés avec succès');
-} catch (error) {
-    console.error('Erreur lors de l\'initialisation de Firebase:', error);
-}
-
-// Fonction pour s'inscrire
-async function signUp(email, password, fullName) {
-    try {
-        // Créer l'utilisateur avec email et mot de passe
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        console.log('Utilisateur créé avec succès:', user.uid);
-        
-        // Enregistrer les informations supplémentaires dans Firestore
-        try {
-            await db.collection("users").doc(user.uid).set({
-                fullName: fullName,
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                role: email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user',
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
             
-            console.log('Informations utilisateur enregistrées dans Firestore');
-            return { success: true, user: user };
-        } catch (firestoreError) {
-            console.error('Erreur Firestore:', firestoreError);
-            // Même si Firestore échoue, on considère que l'inscription est réussie
-            return { success: true, user: user };
+            this.services = window.ParisZikInit.getServices();
+            this.initialized = true;
+            console.log('Authentification ParisZik initialisée');
+            
+            return true;
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation de l\'authentification:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Erreur lors de l\'inscription:', error);
-        throw error;
     }
-}
-
-// Fonction pour se connecter
-async function signIn(email, password) {
-    try {
-        // Se connecter avec email et mot de passe
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+    
+    // S'inscrire avec email et mot de passe
+    async signUp(email, password, fullName) {
+        if (!this.initialized) await this.initialize();
         
-        console.log('Utilisateur connecté avec succès:', user.uid);
-        
-        // Récupérer les informations utilisateur de Firestore
         try {
-            const userDoc = await db.collection("users").doc(user.uid).get();
+            // Créer l'utilisateur
+            const userCredential = await this.services.auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
             
-            if (!userDoc.exists) {
-                // Créer le document utilisateur s'il n'existe pas
-                await db.collection("users").doc(user.uid).set({
-                    fullName: user.displayName || user.email.split('@')[0],
-                    email: user.email,
+            console.log('Utilisateur créé:', user.email);
+            
+            // Déterminer le rôle
+            const isAdmin = window.ParisZikInit.isAdminUser(user);
+            const role = isAdmin ? 'admin' : 'user';
+            
+            try {
+                // Enregistrer dans Firestore (avec gestion des erreurs)
+                await this.services.db.collection("users").doc(user.uid).set({
+                    fullName: fullName,
+                    email: email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    role: user.email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user',
+                    role: role,
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
                 
-                console.log('Document utilisateur créé dans Firestore');
-            } else {
-                // Mettre à jour la date de dernière connexion
-                await db.collection("users").doc(user.uid).update({
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                console.log('Données utilisateur enregistrées dans Firestore');
+            } catch (firestoreError) {
+                console.warn('Erreur Firestore (non bloquante):', firestoreError.message);
+                // Continuer même si Firestore échoue
             }
             
-            return { success: true, user: user };
-        } catch (firestoreError) {
-            console.error('Erreur Firestore lors de la récupération des données utilisateur:', firestoreError);
-            // Même si Firestore échoue, on considère que la connexion est réussie
-            return { success: true, user: user };
+            return {
+                success: true,
+                user: user,
+                role: role
+            };
+        } catch (error) {
+            console.error('Erreur inscription:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Erreur lors de la connexion:', error);
-        throw error;
     }
-}
-
-// Fonction pour se connecter avec Google
-async function signInWithGoogle() {
-    try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const result = await auth.signInWithPopup(provider);
-        const user = result.user;
+    
+    // Se connecter avec email et mot de passe
+    async signIn(email, password) {
+        if (!this.initialized) await this.initialize();
         
-        console.log('Connexion Google réussie:', user.uid);
-        
-        // Récupérer les informations utilisateur de Firestore
         try {
-            const userDoc = await db.collection("users").doc(user.uid).get();
+            // Se connecter
+            const userCredential = await this.services.auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
             
-            if (!userDoc.exists) {
-                // Créer le document utilisateur s'il n'existe pas
-                await db.collection("users").doc(user.uid).set({
-                    fullName: user.displayName || user.email.split('@')[0],
-                    email: user.email,
-                    photoURL: user.photoURL || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    role: user.email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user',
+            console.log('Connexion réussie:', user.email);
+            
+            // Déterminer le rôle
+            const isAdmin = window.ParisZikInit.isAdminUser(user);
+            const role = isAdmin ? 'admin' : 'user';
+            
+            try {
+                // Mettre à jour Firestore
+                await this.services.db.collection("users").doc(user.uid).set({
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
                 
-                console.log('Document utilisateur créé dans Firestore');
-            } else {
-                // Mettre à jour la date de dernière connexion
-                await db.collection("users").doc(user.uid).update({
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                console.log('Données utilisateur mises à jour dans Firestore');
+            } catch (firestoreError) {
+                console.warn('Erreur Firestore (non bloquante):', firestoreError.message);
+                // Continuer même si Firestore échoue
             }
             
-            return { success: true, user: user };
-        } catch (firestoreError) {
-            console.error('Erreur Firestore lors de la récupération des données utilisateur:', firestoreError);
-            // Même si Firestore échoue, on considère que la connexion est réussie
-            return { success: true, user: user };
+            return {
+                success: true,
+                user: user,
+                role: role
+            };
+        } catch (error) {
+            console.error('Erreur connexion:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Erreur lors de la connexion Google:', error);
-        throw error;
     }
-}
-
-// Fonction pour se déconnecter
-async function signOut() {
-    try {
-        await auth.signOut();
-        console.log('Déconnexion réussie');
-        return { success: true };
-    } catch (error) {
-        console.error('Erreur lors de la déconnexion:', error);
-        throw error;
-    }
-}
-
-// Fonction pour vérifier l'état de l'authentification
-function checkAuthState(callback) {
-    auth.onAuthStateChanged((user) => {
-        if (callback && typeof callback === 'function') {
-            callback(user);
+    
+    // Se connecter avec Google
+    async signInWithGoogle() {
+        if (!this.initialized) await this.initialize();
+        
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await this.services.auth.signInWithPopup(provider);
+            const user = result.user;
+            
+            console.log('Connexion Google réussie:', user.email);
+            
+            // Déterminer le rôle
+            const isAdmin = window.ParisZikInit.isAdminUser(user);
+            const role = isAdmin ? 'admin' : 'user';
+            
+            try {
+                // Vérifier/Mettre à jour Firestore
+                const userDoc = await this.services.db.collection("users").doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // Créer le document si inexistant
+                    await this.services.db.collection("users").doc(user.uid).set({
+                        fullName: user.displayName || user.email.split('@')[0],
+                        email: user.email,
+                        photoURL: user.photoURL || '',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        role: role,
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Mettre à jour la dernière connexion
+                    await this.services.db.collection("users").doc(user.uid).update({
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                console.log('Données utilisateur gérées dans Firestore');
+            } catch (firestoreError) {
+                console.warn('Erreur Firestore (non bloquante):', firestoreError.message);
+                // Continuer même si Firestore échoue
+            }
+            
+            return {
+                success: true,
+                user: user,
+                role: role
+            };
+        } catch (error) {
+            console.error('Erreur connexion Google:', error);
+            throw error;
         }
-    });
-}
-
-// Fonction pour réinitialiser le mot de passe
-async function resetPassword(email) {
-    try {
-        await auth.sendPasswordResetEmail(email);
-        console.log('Email de réinitialisation envoyé à:', email);
-        return { success: true };
-    } catch (error) {
-        console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
-        throw error;
+    }
+    
+    // Se déconnecter
+    async signOut() {
+        if (!this.initialized) await this.initialize();
+        
+        try {
+            await this.services.auth.signOut();
+            console.log('Déconnexion réussie');
+            
+            // Nettoyer le localStorage
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userPhoto');
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Erreur déconnexion:', error);
+            throw error;
+        }
+    }
+    
+    // Vérifier l'état d'authentification
+    checkAuthState(callback) {
+        if (!this.initialized) {
+            console.warn('Authentification non initialisée - Initialisation en cours');
+            this.initialize().then(() => {
+                this.services.auth.onAuthStateChanged(callback);
+            }).catch(error => {
+                console.error('Erreur initialisation:', error);
+            });
+        } else {
+            this.services.auth.onAuthStateChanged(callback);
+        }
+    }
+    
+    // Réinitialiser le mot de passe
+    async resetPassword(email) {
+        if (!this.initialized) await this.initialize();
+        
+        try {
+            await this.services.auth.sendPasswordResetEmail(email);
+            console.log('Email de réinitialisation envoyé');
+            return { success: true };
+        } catch (error) {
+            console.error('Erreur réinitialisation mot de passe:', error);
+            throw error;
+        }
+    }
+    
+    // Obtenir l'utilisateur actuel
+    getCurrentUser() {
+        if (!this.initialized || !this.services) {
+            return null;
+        }
+        return this.services.auth.currentUser;
     }
 }
 
-// Exporter les fonctions et services
-window.ParisZikFirebase = {
-    auth,
-    db,
-    storage,
-    signUp,
-    signIn,
-    signInWithGoogle,
-    signOut,
-    checkAuthState,
-    resetPassword
-};
+// Créer et exporter l'instance
+const parisZikAuth = new ParisZikAuth();
+window.ParisZikAuth = parisZikAuth;
 
-console.log('Firebase configuré et prêt à l\'emploi');
+console.log('Module d\'authentification ParisZik prêt');

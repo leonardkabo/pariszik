@@ -9,7 +9,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <script src="js/firebase-init.js"></script>
+    <!-- Configuration et Initialisation -->
+    <script src="js/config.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/content.js"></script>
+    <script src="js/main.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,7 +39,7 @@
                 </ul>
             </nav>
             
-            <div class="auth-buttons">
+            <div class="auth-buttons" id="authButtons">
                 <a href="login.html" class="btn btn-secondary" id="loginBtn">Se connecter</a>
                 <a href="signup.html" class="btn btn-primary" id="signupBtn">S'inscrire</a>
                 <a href="admin.html" class="btn btn-admin" id="adminBtn" style="display: none;">Admin</a>
@@ -205,121 +210,80 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
-    <script src="js/content.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        // Configuration Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-            authDomain: "pariszik-6ced1.firebaseapp.com",
-            projectId: "pariszik-6ced1",
-            storageBucket: "pariszik-6ced1.firebasestorage.app",
-            messagingSenderId: "1065971112198",
-            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
-        };
-        
-        // Initialiser Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        // Éléments du DOM
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const adminBtn = document.getElementById('adminBtn');
-        const userMenu = document.getElementById('userMenu');
-        const userName = document.getElementById('userName');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const sidebar = document.getElementById('sidebar');
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const overlay = document.getElementById('overlay');
-        const sidebarUserName = document.getElementById('sidebarUserName');
-        const sidebarUserRole = document.getElementById('sidebarUserRole');
-        const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
-        const recentContent = document.getElementById('recentContent');
-        const popularContent = document.getElementById('popularContent');
-        const liveContent = document.getElementById('liveContent');
-        
-        // Variables globales
-        let currentUser = null;
-        
-        // Vérifier l'état d'authentification
-        firebase.auth().onAuthStateChanged((user) => {
-            currentUser = user;
-            updateUIBasedOnAuth(user);
-        });
-        
-        // Mettre à jour l'interface utilisateur selon l'état d'authentification
-        function updateUIBasedOnAuth(user) {
-            if (user) {
-                // Utilisateur connecté
-                loginBtn.style.display = 'none';
-                signupBtn.style.display = 'none';
-                
-                // Récupérer les informations de l'utilisateur depuis Firestore
-                const db = firebase.firestore();
-                db.collection("users").doc(user.uid).get()
-                    .then((doc) => {
-                        if (doc.exists) {
-                            const userData = doc.data();
-                            const userFullName = userData.fullName || user.email.split('@')[0];
-                            const userRole = userData.role || 'user';
-                            
-                            // Mettre à jour l'interface
-                            userName.textContent = userFullName;
-                            sidebarUserName.textContent = userFullName;
-                            sidebarUserRole.textContent = userRole === 'admin' ? 'Administrateur' : 'Membre';
-                            sidebarUserAvatar.textContent = userFullName.substring(0, 1).toUpperCase();
-                            
-                            // Afficher le menu utilisateur
-                            userMenu.style.display = 'flex';
-                            userMenu.style.alignItems = 'center';
-                            userMenu.style.gap = '10px';
-                            
-                            // Afficher le bouton admin si l'utilisateur est admin
-                            if (userRole === 'admin') {
-                                adminBtn.style.display = 'inline-block';
-                            } else {
-                                adminBtn.style.display = 'none';
-                            }
-                        } else {
-                            // Créer un document utilisateur par défaut
-                            const defaultUserData = {
-                                fullName: user.email.split('@')[0],
-                                email: user.email,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                role: "user"
-                            };
-                            
-                            db.collection("users").doc(user.uid).set(defaultUserData)
-                                .then(() => {
-                                    userName.textContent = user.email.split('@')[0];
-                                    sidebarUserName.textContent = user.email.split('@')[0];
-                                    sidebarUserRole.textContent = 'Membre';
-                                    sidebarUserAvatar.textContent = user.email.substring(0, 1).toUpperCase();
-                                    
-                                    userMenu.style.display = 'flex';
-                                    userMenu.style.alignItems = 'center';
-                                    userMenu.style.gap = '10px';
-                                    adminBtn.style.display = 'none';
-                                });
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Erreur lors de la récupération des données utilisateur:', error);
-                        userName.textContent = user.email.split('@')[0];
-                        sidebarUserName.textContent = user.email.split('@')[0];
-                        sidebarUserRole.textContent = 'Membre';
-                        sidebarUserAvatar.textContent = user.email.substring(0, 1).toUpperCase();
-                        
-                        userMenu.style.display = 'flex';
-                        userMenu.style.alignItems = 'center';
-                        userMenu.style.gap = '10px';
-                        adminBtn.style.display = 'none';
-                    });
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page d\'accueil chargée');
+            
+            // Éléments du DOM
+            const loginBtn = document.getElementById('loginBtn');
+            const signupBtn = document.getElementById('signupBtn');
+            const adminBtn = document.getElementById('adminBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userName = document.getElementById('userName');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const sidebar = document.getElementById('sidebar');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const overlay = document.getElementById('overlay');
+            const sidebarUserName = document.getElementById('sidebarUserName');
+            const sidebarUserRole = document.getElementById('sidebarUserRole');
+            const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
+            const authButtons = document.getElementById('authButtons');
+            
+            // Vérifier l'état d'authentification
+            if (window.ParisZikAuth) {
+                window.ParisZikAuth.checkAuthState(function(user) {
+                    updateUIBasedOnAuth(user);
+                });
             } else {
-                // Utilisateur non connecté
+                console.error('ParisZikAuth non disponible');
+                // Fallback: afficher les boutons de connexion/inscription
+                showAuthButtons();
+            }
+            
+            // Fonction pour mettre à jour l'interface selon l'état d'authentification
+            function updateUIBasedOnAuth(user) {
+                if (user) {
+                    console.log('Utilisateur connecté:', user.email);
+                    
+                    // Cacher les boutons de connexion/inscription
+                    loginBtn.style.display = 'none';
+                    signupBtn.style.display = 'none';
+                    
+                    // Récupérer les informations depuis localStorage
+                    const storedName = localStorage.getItem('userName');
+                    const storedRole = localStorage.getItem('userRole');
+                    
+                    // Si les informations ne sont pas dans localStorage, les récupérer depuis l'utilisateur
+                    const displayName = storedName || user.displayName || user.email.split('@')[0];
+                    const userRole = storedRole || (window.ParisZikInit?.isAdminUser(user) ? 'admin' : 'user');
+                    
+                    // Mettre à jour l'interface
+                    userName.textContent = displayName;
+                    sidebarUserName.textContent = displayName;
+                    sidebarUserRole.textContent = userRole === 'admin' ? 'Administrateur' : 'Membre';
+                    sidebarUserAvatar.textContent = displayName.substring(0, 1).toUpperCase();
+                    
+                    // Afficher le menu utilisateur
+                    userMenu.style.display = 'flex';
+                    userMenu.style.alignItems = 'center';
+                    userMenu.style.gap = '10px';
+                    
+                    // Afficher le bouton admin si l'utilisateur est admin
+                    if (userRole === 'admin') {
+                        adminBtn.style.display = 'inline-block';
+                    } else {
+                        adminBtn.style.display = 'none';
+                    }
+                    
+                    console.log('Interface utilisateur mise à jour pour:', displayName);
+                } else {
+                    console.log('Aucun utilisateur connecté');
+                    showAuthButtons();
+                }
+            }
+            
+            // Fonction pour afficher les boutons de connexion/inscription
+            function showAuthButtons() {
                 loginBtn.style.display = 'inline-block';
                 signupBtn.style.display = 'inline-block';
                 adminBtn.style.display = 'none';
@@ -329,254 +293,49 @@
                 sidebarUserAvatar.textContent = '👤';
             }
             
-            // Charger les contenus après avoir mis à jour l'interface
-            loadContent();
-        }
-        
-        // Gestion de la déconnexion
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                firebase.auth().signOut()
-                    .then(() => {
+            // Gestion de la déconnexion
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        await window.ParisZikAuth.signOut();
                         console.log('Déconnexion réussie');
-                        localStorage.removeItem('userId');
-                        localStorage.removeItem('userName');
-                        localStorage.removeItem('userRole');
-                        localStorage.removeItem('userPhoto');
-                        window.location.reload();
-                    })
-                    .catch((error) => {
+                        location.reload(); // Recharger la page pour mettre à jour l'interface
+                    } catch (error) {
                         console.error('Erreur lors de la déconnexion:', error);
                         alert('Erreur lors de la déconnexion: ' + error.message);
-                    });
-            });
-        }
-        
-        // Gestion du menu hamburger
-        if (hamburgerBtn && overlay) {
-            hamburgerBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-                hamburgerBtn.classList.toggle('active');
-                document.body.classList.toggle('no-scroll');
-            });
-            
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                hamburgerBtn.classList.remove('active');
-                document.body.classList.remove('no-scroll');
-            });
-        }
-        
-        // Charger les contenus
-        async function loadContent() {
-            try {
-                // Charger les 3 derniers clips
-                await loadRecentContent();
-                
-                // Charger les contenus populaires
-                await loadPopularContent();
-                
-                // Charger les contenus en direct
-                await loadLiveContent();
-                
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus:', error);
+                    }
+                });
             }
-        }
-        
-        // Charger les 3 derniers clips
-        async function loadRecentContent() {
-            try {
-                const db = firebase.firestore();
-                const recentQuery = db.collection("contents")
-                    .orderBy("uploadedAt", "desc")
-                    .limit(3);
+            
+            // Gestion du menu hamburger
+            if (hamburgerBtn && overlay) {
+                hamburgerBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    hamburgerBtn.classList.toggle('active');
+                    document.body.classList.toggle('no-scroll');
+                });
                 
-                const snapshot = await recentQuery.get();
-                
-                recentContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    recentContent.innerHTML = '<p class="no-content">Aucun clip disponible pour le moment.</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), recentContent);
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des derniers clips:', error);
-                recentContent.innerHTML = '<p class="error">Erreur lors du chargement des derniers clips.</p>';
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    hamburgerBtn.classList.remove('active');
+                    document.body.classList.remove('no-scroll');
+                });
             }
-        }
-        
-        // Charger les contenus populaires
-        async function loadPopularContent() {
-            try {
-                const db = firebase.firestore();
-                const popularQuery = db.collection("contents")
-                    .orderBy("views", "desc")
-                    .limit(6);
-                
-                const snapshot = await popularQuery.get();
-                
-                popularContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    popularContent.innerHTML = '<p class="no-content">Aucun contenu populaire disponible.</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), popularContent);
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus populaires:', error);
-                popularContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus populaires.</p>';
-            }
-        }
-        
-        // Charger les contenus en direct
-        async function loadLiveContent() {
-            try {
-                const db = firebase.firestore();
-                const liveQuery = db.collection("contents")
-                    .where("isLive", "==", true)
-                    .orderBy("uploadedAt", "desc")
-                    .limit(3);
-                
-                const snapshot = await liveQuery.get();
-                
-                liveContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), liveContent);
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus en direct:', error);
-                liveContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus en direct.</p>';
-            }
-        }
-        
-        // Ajouter une carte de contenu
-        function addContentCard(id, content, container) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.dataset.id = id;
             
-            // Déterminer l'icône selon le type de contenu
-            let icon = '🎵';
-            if (content.contentType === 'video') icon = '🎬';
-            if (content.contentType === 'live') icon = '🔴';
-            
-            // Formater la date
-            const date = content.uploadedAt?.toDate ? content.uploadedAt.toDate() : new Date(content.uploadedAt);
-            const formattedDate = date ? date.toLocaleDateString('fr-FR') : 'Date inconnue';
-            
-            // Formater la taille du fichier
-            const formattedSize = formatFileSize(content.fileSize);
-            
-            // URL de la miniature
-            const thumbnailUrl = content.thumbnail || `https://via.placeholder.com/300x200/0066ff/ffffff?text=${encodeURIComponent(content.title.substring(0, 2))}`;
-            
-            card.innerHTML = `
-                <div class="card-img-container">
-                    <img src="${thumbnailUrl}" alt="${content.title}" class="card-img">
-                    ${content.isLive ? '<div class="live-overlay"><div class="live-badge">LIVE</div></div>' : ''}
-                </div>
-                <div class="card-content">
-                    <h3 class="card-title">${icon} ${content.title}</h3>
-                    <p class="card-artist">👤 ${content.artist}</p>
-                    <p class="card-meta">📁 ${formattedSize} • 📅 ${formattedDate}</p>
-                    <div class="card-actions">
-                        <button class="play-btn" data-id="${id}" data-title="${content.title}" data-artist="${content.artist}" title="Lire ce contenu">▶</button>
-                        ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        }
-        
-        // Gestion de la lecture
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('play-btn') || e.target.closest('.play-btn')) {
-                e.preventDefault();
-                
-                const playBtn = e.target.classList.contains('play-btn') ? e.target : e.target.closest('.play-btn');
-                const contentId = playBtn.getAttribute('data-id');
-                const title = playBtn.getAttribute('data-title');
-                const artist = playBtn.getAttribute('data-artist');
-                
-                playContent(contentId, title, artist);
-            }
+            // Chargement du contenu (simulé pour cet exemple)
+            loadContent();
         });
         
-        // Fonction pour jouer un contenu
-        function playContent(contentId, title, artist) {
-            // Vérifier si l'utilisateur est connecté
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                if (confirm('Vous devez être connecté pour écouter ce contenu. Voulez-vous vous connecter ?')) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                return;
-            }
-            
-            // Mettre à jour le player
-            const playerTitle = document.querySelector('.player-title');
-            const playerArtist = document.querySelector('.player-artist');
-            const playerImg = document.querySelector('.player-img');
-            
-            if (playerTitle && playerArtist) {
-                playerTitle.textContent = title;
-                playerArtist.textContent = artist;
-                playerImg.src = `https://via.placeholder.com/80x80/0066ff/ffffff?text=${encodeURIComponent(title.substring(0, 2))}`;
-            }
-            
-            // Rediriger vers la page de lecture
-            window.location.href = `player.html?id=${contentId}`;
-        }
-        
-        // Barre de recherche
-        document.querySelector('.search-bar button').addEventListener('click', () => {
-            const searchTerm = document.querySelector('.search-bar input').value;
-            if (searchTerm) {
-                window.location.href = `search.html?q=${encodeURIComponent(searchTerm)}`;
-            }
-        });
-        
-        // Gestion des onglets
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                const tabType = tab.getAttribute('data-tab');
-                console.log(`Onglet sélectionné: ${tabType}`);
-                
-                // Dans une version future, vous pourriez charger du contenu dynamique
-                // selon l'onglet sélectionné
-            });
-        });
-        
-        // Barre de progression
-        document.querySelector('.progress').addEventListener('click', (e) => {
-            const percent = (e.offsetX / e.target.offsetWidth) * 100;
-            document.querySelector('.progress-bar').style.width = `${percent}%`;
-        });
-        
-        // Fonction utilitaire pour formater la taille des fichiers
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        // Fonction pour charger le contenu (à adapter selon vos besoins)
+        function loadContent() {
+            // Simuler le chargement du contenu
+            setTimeout(function() {
+                document.querySelectorAll('.loading-spinner').forEach(spinner => {
+                    spinner.innerHTML = '<p class="no-content">Contenu chargé !</p>';
+                });
+            }, 1500);
         }
     </script>
 </body>

@@ -9,6 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Configuration et Initialisation -->
+    <script src="js/config.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/firebase.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,6 +22,7 @@
                 <div class="logo">Paris<span>Zik</span></div>
                 <h2>Se connecter</h2>
                 <p>Connectez-vous pour accéder à tous les contenus de la plateforme</p>
+                <div class="connection-status" id="connectionStatus">État de la connexion: Vérification...</div>
             </div>
             
             <form id="loginForm" class="auth-form">
@@ -65,9 +70,21 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page de connexion chargée');
+            
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            // Vérifier l'état de l'initialisation
+            if (window.ParisZikInit && window.ParisZikInit.initialized) {
+                connectionStatus.textContent = 'État de la connexion: ✅ Prêt';
+                connectionStatus.style.color = '#28a745';
+            } else {
+                connectionStatus.textContent = 'État de la connexion: ⚠️ Initialisation en cours';
+                connectionStatus.style.color = '#ffc107';
+            }
+            
             // Gestion du formulaire de connexion
             document.getElementById('loginForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -82,28 +99,26 @@
                 submitBtn.disabled = true;
                 
                 try {
-                    // Utiliser la fonction signIn de ParisZikFirebase
-                    const result = await window.ParisZikFirebase.signIn(email, password);
+                    console.log('Tentative de connexion pour:', email);
+                    
+                    // Utiliser l'authentification ParisZik
+                    const result = await window.ParisZikAuth.signIn(email, password);
                     
                     if (result.success) {
-                        const user = result.user;
-                        
-                        // Vérifier si l'utilisateur est admin
-                        const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                        console.log('Connexion réussie:', result.user.email);
                         
                         // Stocker les informations dans le localStorage
-                        localStorage.setItem('userId', user.uid);
-                        localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
-                        localStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
+                        localStorage.setItem('userId', result.user.uid);
+                        localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
+                        localStorage.setItem('userRole', result.role);
                         
-                        // Redirection après connexion
-                        setTimeout(() => {
-                            alert('Connexion réussie ! Bienvenue sur ParisZik.');
-                            window.location.href = 'index.html';
-                        }, 1000);
+                        // Afficher un message de succès
+                        alert('Connexion réussie ! Bienvenue sur ParisZik.');
+                        
+                        // Rediriger vers la page d'accueil
+                        window.location.href = 'index.html';
                     }
                 } catch (error) {
-                    // Erreur de connexion
                     console.error('Erreur de connexion:', error);
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
@@ -126,6 +141,11 @@
                             errorMessage += error.message;
                     }
                     
+                    // Afficher un message d'erreur plus détaillé pour le mode admin
+                    if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
+                        errorMessage += '\n\nNOTE ADMIN: Si vous utilisez Google pour vous connecter habituellement, veuillez utiliser le bouton "Se connecter avec Google" ci-dessous.';
+                    }
+                    
                     alert(errorMessage);
                 }
             });
@@ -136,7 +156,7 @@
                 
                 const email = prompt('Veuillez entrer votre adresse email pour recevoir un lien de réinitialisation:');
                 if (email) {
-                    window.ParisZikFirebase.resetPassword(email)
+                    window.ParisZikAuth.resetPassword(email)
                         .then(() => {
                             alert('Un email de réinitialisation a été envoyé à ' + email);
                         })
@@ -150,19 +170,24 @@
             // Gestion de la connexion avec Google
             document.querySelector('.google-btn').addEventListener('click', async function() {
                 try {
-                    // Utiliser la fonction signInWithGoogle de ParisZikFirebase
-                    const result = await window.ParisZikFirebase.signInWithGoogle();
+                    console.log('Tentative de connexion Google...');
+                    
+                    // Utiliser l'authentification ParisZik
+                    const result = await window.ParisZikAuth.signInWithGoogle();
                     
                     if (result.success) {
-                        const user = result.user;
+                        console.log('Connexion Google réussie:', result.user.email);
                         
                         // Stocker les informations dans le localStorage
-                        localStorage.setItem('userId', user.uid);
-                        localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
-                        localStorage.setItem('userRole', user.email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user');
-                        localStorage.setItem('userPhoto', user.photoURL || '');
+                        localStorage.setItem('userId', result.user.uid);
+                        localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
+                        localStorage.setItem('userRole', result.role);
+                        localStorage.setItem('userPhoto', result.user.photoURL || '');
                         
+                        // Afficher un message de succès
                         alert('Connexion Google réussie !');
+                        
+                        // Rediriger vers la page d'accueil
                         window.location.href = 'index.html';
                     }
                 } catch (error) {
@@ -172,13 +197,30 @@
             });
             
             // Vérifier si l'utilisateur est déjà connecté
-            window.ParisZikFirebase.checkAuthState((user) => {
+            window.ParisZikAuth.checkAuthState((user) => {
                 if (user) {
+                    console.log('Utilisateur déjà connecté:', user.email);
                     // Rediriger vers la page d'accueil si déjà connecté
                     window.location.href = 'index.html';
+                } else {
+                    console.log('Aucun utilisateur connecté');
+                    if (connectionStatus) {
+                        connectionStatus.textContent = 'État de la connexion: ✅ Prêt à se connecter';
+                        connectionStatus.style.color = '#28a745';
+                    }
                 }
             });
         });
     </script>
+    
+    <style>
+        .connection-status {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+    </style>
 </body>
 </html>

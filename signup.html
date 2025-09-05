@@ -9,6 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Configuration et Initialisation -->
+    <script src="js/config.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/firebase.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -77,9 +81,10 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page d\'inscription chargée');
+            
             // Validation du mot de passe en temps réel
             const passwordInput = document.getElementById('signupPassword');
             const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -137,23 +142,26 @@
                 submitBtn.disabled = true;
                 
                 try {
-                    // Utiliser la fonction signUp de ParisZikFirebase
-                    const result = await window.ParisZikFirebase.signUp(email, password, fullName);
+                    console.log('Début de l\'inscription...');
+                    
+                    // Utiliser l'authentification ParisZik
+                    const result = await window.ParisZikAuth.signUp(email, password, fullName);
                     
                     if (result.success) {
+                        console.log('Inscription réussie:', result.user.email);
+                        
                         // Stocker les informations dans le localStorage
                         localStorage.setItem('userId', result.user.uid);
                         localStorage.setItem('userName', fullName);
-                        localStorage.setItem('userRole', email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user');
+                        localStorage.setItem('userRole', result.role);
                         
-                        // Redirection après inscription
-                        setTimeout(() => {
-                            alert('Inscription réussie ! Bienvenue sur ParisZik.');
-                            window.location.href = 'index.html';
-                        }, 1500);
+                        // Afficher un message de succès
+                        alert('Inscription réussie ! Bienvenue sur ParisZik.');
+                        
+                        // Rediriger vers la page d'accueil
+                        window.location.href = 'index.html';
                     }
                 } catch (error) {
-                    // Erreur d'inscription
                     console.error('Erreur d\'inscription:', error);
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
@@ -183,19 +191,24 @@
             // Gestion de l'inscription avec Google
             document.querySelector('.google-btn').addEventListener('click', async function() {
                 try {
-                    // Utiliser la fonction signInWithGoogle de ParisZikFirebase
-                    const result = await window.ParisZikFirebase.signInWithGoogle();
+                    console.log('Début de la connexion Google...');
+                    
+                    // Utiliser l'authentification ParisZik
+                    const result = await window.ParisZikAuth.signInWithGoogle();
                     
                     if (result.success) {
-                        const user = result.user;
+                        console.log('Connexion Google réussie:', result.user.email);
                         
                         // Stocker les informations dans le localStorage
-                        localStorage.setItem('userId', user.uid);
-                        localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
-                        localStorage.setItem('userRole', user.email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user');
-                        localStorage.setItem('userPhoto', user.photoURL || '');
+                        localStorage.setItem('userId', result.user.uid);
+                        localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
+                        localStorage.setItem('userRole', result.role);
+                        localStorage.setItem('userPhoto', result.user.photoURL || '');
                         
+                        // Afficher un message de succès
                         alert('Bienvenue sur ParisZik !');
+                        
+                        // Rediriger vers la page d'accueil
                         window.location.href = 'index.html';
                     }
                 } catch (error) {
@@ -205,8 +218,9 @@
             });
             
             // Vérifier si l'utilisateur est déjà connecté
-            window.ParisZikFirebase.checkAuthState((user) => {
+            window.ParisZikAuth.checkAuthState((user) => {
                 if (user) {
+                    console.log('Utilisateur déjà connecté:', user.email);
                     // Rediriger vers la page d'accueil si déjà connecté
                     window.location.href = 'index.html';
                 }
