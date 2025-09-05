@@ -1,11 +1,4 @@
 // Configuration Firebase pour ParisZik
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: process.env.FIREBASE_API_KEY || "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
     authDomain: process.env.FIREBASE_AUTH_DOMAIN || "pariszik-6ced1.firebaseapp.com",
@@ -15,7 +8,6 @@ const firebaseConfig = {
     appId: process.env.FIREBASE_APP_ID || "1:1065971112198:web:d997951efedb2c6bc3a687"
 };
 
-
 // Initialiser Firebase
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
@@ -23,7 +15,7 @@ if (typeof firebase !== 'undefined') {
     const db = firebase.firestore();
     const storage = firebase.storage();
     
-    console.log('Firebase initialisé');
+    console.log('Firebase initialisé avec succès');
     
     // Fonction pour s'inscrire
     function signUp(email, password, fullName) {

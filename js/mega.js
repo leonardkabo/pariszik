@@ -370,10 +370,9 @@ const megaIntegration = new MegaIntegration();
 // Fonction pour initialiser MEGA avec les identifiants de l'administrateur
 async function initializeMegaForAdmin() {
     try {
-        // Dans une version réelle, vous récupéreriez les identifiants depuis une source sécurisée
-        // Comme Firebase ou un backend sécurisé
-        const email = 'leonardkabo32@gmail.com'; // À remplacer par les vraies informations
-        const password = 'pariszik@2025'; // À remplacer par les vraies informations
+        // Utiliser les identifiants fournis
+        const email = 'leonardkabo32@gmail.com';
+        const password = 'pariszik@2025';
         
         await megaIntegration.initialize(email, password);
         console.log('MEGA initialisé pour l\'administrateur');
@@ -398,10 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('admin.html')) {
         console.log('Page d\'administration détectée, initialisation de MEGA...');
         
-        // Dans une version réelle, vous vérifieriez d'abord si l'utilisateur est connecté comme admin
-        // puis vous récupéreriez les identifiants sécurisés
-        
-        // Pour le moment, on initialise avec des identifiants simulés
+        // Initialiser MEGA avec les identifiants fournis
         initializeMegaForAdmin().then(success => {
             if (success) {
                 console.log('MEGA prêt pour l\'administration');
