@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParisZik - Découvrez la musique du monde entier</title>
+    <title>ParisZik - Bibliothèque</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -25,8 +25,8 @@
             
             <nav id="mainNav">
                 <ul>
-                    <li><a href="index.html" class="active">Accueil</a></li>
-                    <li><a href="library.html">Bibliothèque</a></li>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="library.html" class="active">Bibliothèque</a></li>
                     <li><a href="live.html">En Direct</a></li>
                     <li><a href="#">Clips</a></li>
                     <li><a href="#">Artistes</a></li>
@@ -52,8 +52,8 @@
         </div>
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="index.html" class="active">Accueil</a></li>
-                <li><a href="library.html">Bibliothèque</a></li>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="library.html" class="active">Bibliothèque</a></li>
                 <li><a href="favorites.html">Favoris</a></li>
                 <li><a href="recent.html">Derniers ajouts</a></li>
                 <li><a href="playlists.html">Playlists</a></li>
@@ -78,82 +78,79 @@
     <div class="overlay" id="overlay"></div>
 
     <main>
-        <section class="hero">
-            <div class="container">
-                <h1>ParisZik</h1>
-                <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct</p>
-                <div class="search-bar">
-                    <input type="text" placeholder="Rechercher un artiste, un titre, un album...">
-                    <button>Rechercher</button>
+        <div class="container">
+            <div class="library-header">
+                <h1 class="page-title">Bibliothèque</h1>
+                <p class="page-description">Découvrez tous les clips audio et vidéo disponibles sur ParisZik</p>
+            </div>
+            
+            <div class="library-controls">
+                <div class="filter-controls">
+                    <select id="contentTypeFilter" class="filter-select">
+                        <option value="all">Tous les types</option>
+                        <option value="audio">Audio</option>
+                        <option value="video">Vidéo</option>
+                        <option value="live">En direct</option>
+                    </select>
+                    
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">Toutes les catégories</option>
+                        <option value="pop">Pop</option>
+                        <option value="rock">Rock</option>
+                        <option value="hiphop">Hip-Hop</option>
+                        <option value="electro">Électro</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="classical">Classique</option>
+                        <option value="world">World</option>
+                    </select>
+                </div>
+                
+                <div class="search-control">
+                    <input type="text" id="librarySearch" placeholder="Rechercher dans la bibliothèque...">
                 </div>
             </div>
-        </section>
-
-        <div class="tabs">
-            <div class="container">
-                <div class="tab active" data-tab="popular">Populaire</div>
-                <div class="tab" data-tab="new">Nouveautés</div>
-                <div class="tab" data-tab="live">En Direct</div>
-                <div class="tab" data-tab="playlists">Playlists</div>
+            
+            <div class="library-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="totalContents">0</span>
+                    <span class="stat-label">Contenus</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalAudio">0</span>
+                    <span class="stat-label">Audios</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalVideo">0</span>
+                    <span class="stat-label">Vidéos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalLive">0</span>
+                    <span class="stat-label">En direct</span>
+                </div>
             </div>
-        </div>
-
-        <section class="content-section">
-            <div class="container">
+            
+            <div class="content-section">
                 <div class="section-header">
-                    <h2 class="section-title">Derniers clips ajoutés</h2>
-                    <a href="library.html" class="view-more-btn">Voir plus →</a>
+                    <h2 class="section-title">Tous les contenus</h2>
+                    <div class="sort-controls">
+                        <select id="sortOrder" class="sort-select">
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                            <option value="popular">Plus populaires</option>
+                            <option value="alphabetical">Ordre alphabétique</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="content-grid" id="recentContent">
-                    <!-- Les 3 derniers clips seront affichés ici -->
+                
+                <div class="content-grid" id="libraryContent">
                     <div class="loading-spinner">
                         <div class="spinner"></div>
-                        <p>Chargement des derniers clips...</p>
+                        <p>Chargement de la bibliothèque...</p>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">En ce moment</h2>
-                    <a href="trending.html" class="view-more-btn">Voir plus →</a>
-                </div>
-                <div class="content-grid" id="popularContent">
-                    <!-- Contenu populaire -->
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Événements en direct</h2>
-                    <a href="live.html" class="view-more-btn">Voir plus →</a>
-                </div>
-                <div class="content-grid" id="liveContent">
-                    <!-- Événements en direct -->
-                </div>
-            </div>
-        </section>
-
-        <div class="player">
-            <div class="container">
-                <div class="player-container">
-                    <img src="assets/images/placeholder.jpg" alt="Now Playing" class="player-img">
-                    <div class="player-info">
-                        <h4 class="player-title">Aucun titre en lecture</h4>
-                        <p class="player-artist">-</p>
-                    </div>
-                    <div class="player-controls">
-                        <button class="control-btn">⏮</button>
-                        <button class="control-btn">⏯</button>
-                        <button class="control-btn">⏭</button>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar"></div>
-                    </div>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be generated here -->
                 </div>
             </div>
         </div>
@@ -236,12 +233,21 @@
         const sidebarUserName = document.getElementById('sidebarUserName');
         const sidebarUserRole = document.getElementById('sidebarUserRole');
         const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
-        const recentContent = document.getElementById('recentContent');
-        const popularContent = document.getElementById('popularContent');
-        const liveContent = document.getElementById('liveContent');
+        const libraryContent = document.getElementById('libraryContent');
+        const contentTypeFilter = document.getElementById('contentTypeFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const librarySearch = document.getElementById('librarySearch');
+        const sortOrder = document.getElementById('sortOrder');
+        const pagination = document.getElementById('pagination');
+        const totalContents = document.getElementById('totalContents');
+        const totalAudio = document.getElementById('totalAudio');
+        const totalVideo = document.getElementById('totalVideo');
+        const totalLive = document.getElementById('totalLive');
         
         // Variables globales
         let currentUser = null;
+        let currentPage = 1;
+        const itemsPerPage = 12;
         
         // Vérifier l'état d'authentification
         firebase.auth().onAuthStateChanged((user) => {
@@ -329,7 +335,8 @@
             }
             
             // Charger les contenus après avoir mis à jour l'interface
-            loadContent();
+            loadLibraryContent();
+            loadLibraryStats();
         }
         
         // Gestion de la déconnexion
@@ -368,96 +375,145 @@
             });
         }
         
-        // Charger les contenus
-        async function loadContent() {
+        // Charger le contenu de la bibliothèque
+        async function loadLibraryContent() {
             try {
-                // Charger les 3 derniers clips
-                await loadRecentContent();
+                const db = firebase.firestore();
+                let query = db.collection("contents");
                 
-                // Charger les contenus populaires
-                await loadPopularContent();
+                // Appliquer les filtres
+                const contentType = contentTypeFilter.value;
+                const category = categoryFilter.value;
+                const search = librarySearch.value.toLowerCase();
+                const sort = sortOrder.value;
                 
-                // Charger les contenus en direct
-                await loadLiveContent();
+                if (contentType !== 'all') {
+                    query = query.where("contentType", "==", contentType);
+                }
+                
+                if (category !== 'all') {
+                    query = query.where("category", "==", category);
+                }
+                
+                // Appliquer le tri
+                switch (sort) {
+                    case 'oldest':
+                        query = query.orderBy("uploadedAt", "asc");
+                        break;
+                    case 'popular':
+                        query = query.orderBy("views", "desc");
+                        break;
+                    case 'alphabetical':
+                        query = query.orderBy("title", "asc");
+                        break;
+                    default:
+                        query = query.orderBy("uploadedAt", "desc");
+                }
+                
+                // Calculer le nombre total de documents pour la pagination
+                const snapshot = await query.get();
+                const totalItems = snapshot.size;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                // Appliquer la pagination
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const paginatedQuery = query.limit(itemsPerPage).offset(startIndex);
+                const paginatedSnapshot = await paginatedQuery.get();
+                
+                // Afficher les résultats
+                libraryContent.innerHTML = '';
+                
+                if (paginatedSnapshot.empty) {
+                    libraryContent.innerHTML = '<p class="no-content">Aucun contenu ne correspond à votre recherche.</p>';
+                } else {
+                    paginatedSnapshot.forEach((doc) => {
+                        addContentCard(doc.id, doc.data(), libraryContent);
+                    });
+                }
+                
+                // Générer la pagination
+                generatePagination(totalPages);
                 
             } catch (error) {
-                console.error('Erreur lors du chargement des contenus:', error);
+                console.error('Erreur lors du chargement de la bibliothèque:', error);
+                libraryContent.innerHTML = '<p class="error">Erreur lors du chargement de la bibliothèque.</p>';
             }
         }
         
-        // Charger les 3 derniers clips
-        async function loadRecentContent() {
+        // Charger les statistiques de la bibliothèque
+        async function loadLibraryStats() {
             try {
                 const db = firebase.firestore();
-                const recentQuery = db.collection("contents")
-                    .orderBy("uploadedAt", "desc")
-                    .limit(3);
+                const snapshot = await db.collection("contents").get();
                 
-                const snapshot = await recentQuery.get();
+                let audioCount = 0;
+                let videoCount = 0;
+                let liveCount = 0;
                 
-                recentContent.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const content = doc.data();
+                    if (content.contentType === 'audio') audioCount++;
+                    if (content.contentType === 'video') videoCount++;
+                    if (content.contentType === 'live') liveCount++;
+                });
                 
-                if (snapshot.empty) {
-                    recentContent.innerHTML = '<p class="no-content">Aucun clip disponible pour le moment.</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), recentContent);
-                    });
-                }
+                totalContents.textContent = snapshot.size;
+                totalAudio.textContent = audioCount;
+                totalVideo.textContent = videoCount;
+                totalLive.textContent = liveCount;
+                
             } catch (error) {
-                console.error('Erreur lors du chargement des derniers clips:', error);
-                recentContent.innerHTML = '<p class="error">Erreur lors du chargement des derniers clips.</p>';
+                console.error('Erreur lors du chargement des statistiques:', error);
             }
         }
         
-        // Charger les contenus populaires
-        async function loadPopularContent() {
-            try {
-                const db = firebase.firestore();
-                const popularQuery = db.collection("contents")
-                    .orderBy("views", "desc")
-                    .limit(6);
-                
-                const snapshot = await popularQuery.get();
-                
-                popularContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    popularContent.innerHTML = '<p class="no-content">Aucun contenu populaire disponible.</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), popularContent);
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus populaires:', error);
-                popularContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus populaires.</p>';
+        // Générer la pagination
+        function generatePagination(totalPages) {
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Bouton précédent
+            if (currentPage > 1) {
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-btn';
+                prevBtn.innerHTML = '← Précédent';
+                prevBtn.addEventListener('click', () => {
+                    currentPage--;
+                    loadLibraryContent();
+                });
+                pagination.appendChild(prevBtn);
             }
-        }
-        
-        // Charger les contenus en direct
-        async function loadLiveContent() {
-            try {
-                const db = firebase.firestore();
-                const liveQuery = db.collection("contents")
-                    .where("isLive", "==", true)
-                    .orderBy("uploadedAt", "desc")
-                    .limit(3);
-                
-                const snapshot = await liveQuery.get();
-                
-                liveContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
+            
+            // Numéros de page
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    const currentBtn = document.createElement('button');
+                    currentBtn.className = 'pagination-btn active';
+                    currentBtn.textContent = i;
+                    pagination.appendChild(currentBtn);
                 } else {
-                    snapshot.forEach((doc) => {
-                        addContentCard(doc.id, doc.data(), liveContent);
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = 'pagination-btn';
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        loadLibraryContent();
                     });
+                    pagination.appendChild(pageBtn);
                 }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus en direct:', error);
-                liveContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus en direct.</p>';
+            }
+            
+            // Bouton suivant
+            if (currentPage < totalPages) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-btn';
+                nextBtn.innerHTML = 'Suivant →';
+                nextBtn.addEventListener('click', () => {
+                    currentPage++;
+                    loadLibraryContent();
+                });
+                pagination.appendChild(nextBtn);
             }
         }
         
@@ -491,6 +547,10 @@
                     <h3 class="card-title">${icon} ${content.title}</h3>
                     <p class="card-artist">👤 ${content.artist}</p>
                     <p class="card-meta">📁 ${formattedSize} • 📅 ${formattedDate}</p>
+                    <div class="card-stats">
+                        <span class="stat">👁️ ${content.views || 0}</span>
+                        <span class="stat">👍 ${content.likes || 0}</span>
+                    </div>
                     <div class="card-actions">
                         <button class="play-btn" data-id="${id}" data-title="${content.title}" data-artist="${content.artist}" title="Lire ce contenu">▶</button>
                         ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
@@ -526,47 +586,29 @@
                 return;
             }
             
-            // Mettre à jour le player
-            const playerTitle = document.querySelector('.player-title');
-            const playerArtist = document.querySelector('.player-artist');
-            const playerImg = document.querySelector('.player-img');
-            
-            if (playerTitle && playerArtist) {
-                playerTitle.textContent = title;
-                playerArtist.textContent = artist;
-                playerImg.src = `https://via.placeholder.com/80x80/0066ff/ffffff?text=${encodeURIComponent(title.substring(0, 2))}`;
-            }
-            
             // Rediriger vers la page de lecture
             window.location.href = `player.html?id=${contentId}`;
         }
         
-        // Barre de recherche
-        document.querySelector('.search-bar button').addEventListener('click', () => {
-            const searchTerm = document.querySelector('.search-bar input').value;
-            if (searchTerm) {
-                window.location.href = `search.html?q=${encodeURIComponent(searchTerm)}`;
-            }
+        // Écouter les changements de filtres
+        contentTypeFilter.addEventListener('change', () => {
+            currentPage = 1;
+            loadLibraryContent();
         });
         
-        // Gestion des onglets
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                const tabType = tab.getAttribute('data-tab');
-                console.log(`Onglet sélectionné: ${tabType}`);
-                
-                // Dans une version future, vous pourriez charger du contenu dynamique
-                // selon l'onglet sélectionné
-            });
+        categoryFilter.addEventListener('change', () => {
+            currentPage = 1;
+            loadLibraryContent();
         });
         
-        // Barre de progression
-        document.querySelector('.progress').addEventListener('click', (e) => {
-            const percent = (e.offsetX / e.target.offsetWidth) * 100;
-            document.querySelector('.progress-bar').style.width = `${percent}%`;
+        librarySearch.addEventListener('input', () => {
+            currentPage = 1;
+            loadLibraryContent();
+        });
+        
+        sortOrder.addEventListener('change', () => {
+            currentPage = 1;
+            loadLibraryContent();
         });
         
         // Fonction utilitaire pour formater la taille des fichiers
@@ -578,5 +620,175 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
     </script>
+    
+    <style>
+        /* Styles spécifiques pour la bibliothèque */
+        .library-header {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem 0;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .page-description {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .library-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            align-items: center;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select, .sort-select {
+            padding: 0.5rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+        
+        .filter-select:focus, .sort-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+        
+        .search-control {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-control input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .search-control input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+        
+        .library-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            display: block;
+        }
+        
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .pagination-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .card-stats {
+            display: flex;
+            gap: 1rem;
+            margin: 0.5rem 0;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .library-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-control {
+                min-width: auto;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </body>
 </html>
