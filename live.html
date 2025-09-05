@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParisZik - En Direct</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">Paris<span>Zik</span></div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="#">Découvrir</a></li>
+                    <li><a href="live.html" class="active">En Direct</a></li>
+                    <li><a href="#">Clips</a></li>
+                    <li><a href="#">Artistes</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="login.html" class="btn btn-secondary">Se connecter</a>
+                <a href="signup.html" class="btn btn-primary">S'inscrire</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="live-page">
+                <div class="live-header">
+                    <h1>Concert Paris - En Direct</h1>
+                    <p class="live-artist">Artiste Populaire</p>
+                    <div class="live-status">
+                        <span class="live-dot">●</span> En direct • 15 432 spectateurs
+                    </div>
+                </div>
+                
+                <div class="live-player">
+                    <div class="live-video-container">
+                        <img src="https://via.placeholder.com/800x450/ffcc00/000000?text=Live+Stream" alt="Diffusion en direct" class="live-video">
+                        <!-- Pour une vraie diffusion en direct, vous utiliserez une balise video avec un flux live -->
+                        <!-- <video controls class="live-video">
+                            <source src="chemin/vers/stream.m3u8" type="application/x-mpegURL">
+                            Votre navigateur ne supporte pas la lecture vidéo en direct.
+                        </video> -->
+                        <div class="live-overlay">
+                            <div class="live-badge">LIVE</div>
+                        </div>
+                    </div>
+                    
+                    <div class="live-controls">
+                        <div class="live-progress">
+                            <div class="progress-bar" style="width: 100%;"></div>
+                        </div>
+                        <div class="player-controls">
+                            <button class="control-btn">⏮</button>
+                            <button class="control-btn">⏸</button>
+                            <button class="control-btn">⏭</button>
+                            <div class="volume-control">
+                                <span>🔊</span>
+                                <div class="volume-slider">
+                                    <div class="volume-bar" style="width: 70%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="live-interaction">
+                    <div class="live-chat">
+                        <div class="chat-header">
+                            <h3>Chat en direct</h3>
+                            <div class="chat-stats">15 432 en ligne</div>
+                        </div>
+                        <div class="chat-messages">
+                            <div class="chat-message">
+                                <span class="user-name">Marie_Dupont</span>
+                                <span class="message-text">Super concert ! 🎵</span>
+                            </div>
+                            <div class="chat-message">
+                                <span class="user-name">Pierre_87</span>
+                                <span class="message-text">Quel talent cet artiste ! 👏</span>
+                            </div>
+                            <div class="chat-message">
+                                <span class="user-name">Sophie_L</span>
+                                <span class="message-text">Je suis à Paris, j'aurais dû venir en vrai !</span>
+                            </div>
+                            <div class="chat-message">
+                                <span class="user-name">Thomas_R</span>
+                                <span class="message-text">La qualité du son est incroyable !</span>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" placeholder="Votre message...">
+                            <button class="btn btn-primary">Envoyer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="live-info">
+                        <div class="info-section">
+                            <h3>À propos de cet événement</h3>
+                            <p>C'est le grand retour de l'artiste Populaire sur scène à Paris après 3 ans d'absence. Un concert exceptionnel avec des invités surprise et un setlist inédit.</p>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3>Partager</h3>
+                            <div class="share-buttons">
+                                <button class="btn btn-secondary">Facebook</button>
+                                <button class="btn btn-secondary">Twitter</button>
+                                <button class="btn btn-secondary">WhatsApp</button>
+                                <button class="btn btn-secondary">Copier le lien</button>
+                            </div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3>Soutenir l'artiste</h3>
+                            <button class="btn btn-primary">💖 Faire un don</button>
+                            <button class="btn btn-secondary">🛒 Boutique officielle</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="other-lives">
+                <h2 class="section-title">Autres diffusions en direct</h2>
+                <div class="content-grid">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>ParisZik</h3>
+                    <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens Rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="#">Découvrir</a></li>
+                        <li><a href="live.html">En Direct</a></li>
+                        <li><a href="#">Clips</a></li>
+                        <li><a href="#">Artistes</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Légal</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Mentions Légales</a></li>
+                        <li><a href="#">Politique de Confidentialité</a></li>
+                        <li><a href="#">Conditions d'Utilisation</a></li>
+                        <li><a href="#">Cookies</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Nous écrire</a></li>
+                        <li><a href="#">Carrières</a></li>
+                        <li><a href="#">Partenariats</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 ParisZik. Tous droits réservés.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Générer d'autres diffusions en direct
+        const otherLives = document.querySelector('.content-grid');
+        const liveItems = [
+            { title: "Festival d'été", artist: "Plusieurs Artistes", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+2", isLive: true },
+            { title: "Session Acoustique", artist: "Artiste Indépendant", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+3", isLive: true },
+            { title: "Concert New York", artist: "Artiste International", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+4", isLive: false },
+            { title: "DJ Set Ibiza", artist: "DJ Célèbre", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+5", isLive: true }
+        ];
+
+        liveItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" class="card-img">
+                <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-artist">${item.artist}</p>
+                    <div class="card-actions">
+                        <div class="play-btn" data-title="${item.title}" data-artist="${item.artist}">▶</div>
+                        ${item.isLive ? '<div class="live-badge">LIVE</div>' : ''}
+                    </div>
+                </div>
+            `;
+            otherLives.appendChild(card);
+        });
+
+        // Gestion de la lecture
+        document.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const title = this.getAttribute('data-title');
+                const artist = this.getAttribute('data-artist');
+                alert(`Lecture de "${title}" par ${artist}`);
+            });
+        });
+
+        // Gestion du chat
+        document.querySelector('.chat-input button').addEventListener('click', function() {
+            const input = document.querySelector('.chat-input input');
+            if (input.value.trim() !== '') {
+                const messages = document.querySelector('.chat-messages');
+                const message = document.createElement('div');
+                message.className = 'chat-message';
+                message.innerHTML = `
+                    <span class="user-name">Vous</span>
+                    <span class="message-text">${input.value}</span>
+                `;
+                messages.appendChild(message);
+                messages.scrollTop = messages.scrollHeight;
+                input.value = '';
+            }
+        });
+
+        // Gestion de la barre de progression
+        document.querySelector('.live-progress').addEventListener('click', function(e) {
+            const percent = (e.offsetX / this.offsetWidth) * 100;
+            this.querySelector('.progress-bar').style.width = `${percent}%`;
+        });
+
+        // Gestion du volume
+        document.querySelector('.volume-slider').addEventListener('click', function(e) {
+            const percent = (e.offsetX / this.offsetWidth) * 100;
+            this.querySelector('.volume-bar').style.width = `${percent}%`;
+        });
+
+        // Gestion des boutons de partage
+        document.querySelectorAll('.share-buttons button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                alert(`${this.textContent} : Fonctionnalité à implémenter`);
+            });
+        });
+    </script>
+</body>
+</html>

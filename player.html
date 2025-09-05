@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParisZik - Lecture</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">Paris<span>Zik</span></div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="#">Découvrir</a></li>
+                    <li><a href="live.html">En Direct</a></li>
+                    <li><a href="#">Clips</a></li>
+                    <li><a href="#">Artistes</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="login.html" class="btn btn-secondary">Se connecter</a>
+                <a href="signup.html" class="btn btn-primary">S'inscrire</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="player-page">
+                <div class="player-content">
+                    <div class="player-media">
+                        <img src="assets/images/placeholder.jpg" alt="Clip en lecture" class="player-media-img">
+                        <!-- Pour une vidéo, vous remplacerez l'image par une balise video -->
+                        <!-- <video controls class="player-video">
+                            <source src="chemin/vers/video.mp4" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture vidéo.
+                        </video> -->
+                    </div>
+                    
+                    <div class="player-info-section">
+                        <h1 class="player-title">Summer Vibes</h1>
+                        <p class="player-artist">Artiste International</p>
+                        <p class="player-description">Découvrez le dernier clip de l'artiste international qui fait sensation partout dans le monde.</p>
+                        
+                        <div class="player-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">2.5M</span>
+                                <span class="stat-label">Vues</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">45K</span>
+                                <span class="stat-label">Likes</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">12K</span>
+                                <span class="stat-label">Commentaires</span>
+                            </div>
+                        </div>
+                        
+                        <div class="player-actions">
+                            <button class="btn btn-primary">👍 Like</button>
+                            <button class="btn btn-secondary">💬 Commenter</button>
+                            <button class="btn btn-secondary">↪️ Partager</button>
+                            <button class="btn btn-secondary">➕ Ajouter à une playlist</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player-controls-full">
+                    <div class="player-progress">
+                        <div class="progress-bar" style="width: 30%;"></div>
+                    </div>
+                    <div class="player-controls">
+                        <button class="control-btn">⏮</button>
+                        <button class="control-btn">⏯</button>
+                        <button class="control-btn">⏭</button>
+                        <div class="volume-control">
+                            <span>🔊</span>
+                            <div class="volume-slider">
+                                <div class="volume-bar" style="width: 70%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="related-content">
+                <h2 class="section-title">À découvrir également</h2>
+                <div class="content-grid">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>ParisZik</h3>
+                    <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens Rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="#">Découvrir</a></li>
+                        <li><a href="live.html">En Direct</a></li>
+                        <li><a href="#">Clips</a></li>
+                        <li><a href="#">Artistes</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Légal</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Mentions Légales</a></li>
+                        <li><a href="#">Politique de Confidentialité</a></li>
+                        <li><a href="#">Conditions d'Utilisation</a></li>
+                        <li><a href="#">Cookies</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Nous écrire</a></li>
+                        <li><a href="#">Carrières</a></li>
+                        <li><a href="#">Partenariats</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 ParisZik. Tous droits réservés.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Générer du contenu similaire
+        const relatedContent = document.querySelector('.content-grid');
+        const relatedItems = [
+            { title: "Midnight Dreams", artist: "Nouvel Artiste", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+2" },
+            { title: "Electric Soul", artist: "Artiste Français", image: "https://via.placeholder.com/300x200/001f3f/ffffff?text=Clip+3" },
+            { title: "City Lights", artist: "Artiste Africain", image: "https://via.placeholder.com/300x200/0066ff/ffffff?text=Clip+4" },
+            { title: "Ocean Waves", artist: "Artiste Américain", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+5" }
+        ];
+
+        relatedItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" class="card-img">
+                <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-artist">${item.artist}</p>
+                    <div class="card-actions">
+                        <div class="play-btn" data-title="${item.title}" data-artist="${item.artist}">▶</div>
+                    </div>
+                </div>
+            `;
+            relatedContent.appendChild(card);
+        });
+
+        // Gestion de la lecture
+        document.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const title = this.getAttribute('data-title');
+                const artist = this.getAttribute('data-artist');
+                alert(`Lecture de "${title}" par ${artist}`);
+            });
+        });
+
+        // Gestion de la barre de progression
+        document.querySelector('.player-progress').addEventListener('click', function(e) {
+            const percent = (e.offsetX / this.offsetWidth) * 100;
+            this.querySelector('.progress-bar').style.width = `${percent}%`;
+        });
+
+        // Gestion du volume
+        document.querySelector('.volume-slider').addEventListener('click', function(e) {
+            const percent = (e.offsetX / this.offsetWidth) * 100;
+            this.querySelector('.volume-bar').style.width = `${percent}%`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParisZik - Découvrez la musique du monde entier</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">Paris<span>Zik</span></div>
+            <nav>
+                <ul>
+                    <li><a href="index.html" class="active">Accueil</a></li>
+                    <li><a href="#">Découvrir</a></li>
+                    <li><a href="live.html">En Direct</a></li>
+                    <li><a href="#">Clips</a></li>
+                    <li><a href="#">Artistes</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="login.html" class="btn btn-secondary">Se connecter</a>
+                <a href="signup.html" class="btn btn-primary">S'inscrire</a>
+                <a href="admin.html" class="btn btn-admin">Admin</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>ParisZik</h1>
+                <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct</p>
+                <div class="search-bar">
+                    <input type="text" placeholder="Rechercher un artiste, un titre, un album...">
+                    <button>Rechercher</button>
+                </div>
+            </div>
+        </section>
+
+        <div class="tabs">
+            <div class="container">
+                <div class="tab active" data-tab="popular">Populaire</div>
+                <div class="tab" data-tab="new">Nouveautés</div>
+                <div class="tab" data-tab="live">En Direct</div>
+                <div class="tab" data-tab="playlists">Playlists</div>
+            </div>
+        </div>
+
+        <section class="content-section">
+            <div class="container">
+                <h2 class="section-title">En ce moment</h2>
+                <div class="content-grid" id="popularContent">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <div class="container">
+                <h2 class="section-title">Événements en direct</h2>
+                <div class="content-grid" id="liveContent">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <div class="player">
+            <div class="container">
+                <div class="player-container">
+                    <img src="assets/images/placeholder.jpg" alt="Now Playing" class="player-img">
+                    <div class="player-info">
+                        <h4 class="player-title">Aucun titre en lecture</h4>
+                        <p class="player-artist">-</p>
+                    </div>
+                    <div class="player-controls">
+                        <button class="control-btn">⏮</button>
+                        <button class="control-btn">⏯</button>
+                        <button class="control-btn">⏭</button>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>ParisZik</h3>
+                    <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens Rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="#">Découvrir</a></li>
+                        <li><a href="live.html">En Direct</a></li>
+                        <li><a href="#">Clips</a></li>
+                        <li><a href="#">Artistes</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Légal</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Mentions Légales</a></li>
+                        <li><a href="#">Politique de Confidentialité</a></li>
+                        <li><a href="#">Conditions d'Utilisation</a></li>
+                        <li><a href="#">Cookies</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Nous écrire</a></li>
+                        <li><a href="#">Carrières</a></li>
+                        <li><a href="#">Partenariats</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 ParisZik. Tous droits réservés.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Contenu populaire
+        const popularContent = document.getElementById('popularContent');
+        const popularItems = [
+            { title: "Summer Vibes", artist: "Artiste International", image: "https://via.placeholder.com/300x200/0066ff/ffffff?text=Clip+1", isLive: true },
+            { title: "Midnight Dreams", artist: "Nouvel Artiste", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+2", isLive: false },
+            { title: "Electric Soul", artist: "Artiste Français", image: "https://via.placeholder.com/300x200/001f3f/ffffff?text=Clip+3", isLive: false },
+            { title: "City Lights", artist: "Artiste Africain", image: "https://via.placeholder.com/300x200/0066ff/ffffff?text=Clip+4", isLive: false },
+            { title: "Ocean Waves", artist: "Artiste Américain", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+5", isLive: false },
+            { title: "Mountain High", artist: "Artiste Asiatique", image: "https://via.placeholder.com/300x200/001f3f/ffffff?text=Clip+6", isLive: false }
+        ];
+
+        popularItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" class="card-img">
+                <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-artist">${item.artist}</p>
+                    <div class="card-actions">
+                        <div class="play-btn" data-title="${item.title}" data-artist="${item.artist}">▶</div>
+                        ${item.isLive ? '<div class="live-badge">LIVE</div>' : ''}
+                    </div>
+                </div>
+            `;
+            popularContent.appendChild(card);
+        });
+
+        // Événements en direct
+        const liveContent = document.getElementById('liveContent');
+        const liveItems = [
+            { title: "Concert Paris", artist: "Artiste Populaire", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+1", isLive: true },
+            { title: "Festival d'été", artist: "Plusieurs Artistes", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+2", isLive: true },
+            { title: "Session Acoustique", artist: "Artiste Indépendant", image: "https://via.placeholder.com/300x200/ffcc00/000000?text=Live+3", isLive: false }
+        ];
+
+        liveItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.title}" class="card-img">
+                <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-artist">${item.artist}</p>
+                    <div class="card-actions">
+                        <div class="play-btn" data-title="${item.title}" data-artist="${item.artist}">▶</div>
+                        ${item.isLive ? '<div class="live-badge">LIVE</div>' : ''}
+                    </div>
+                </div>
+            `;
+            liveContent.appendChild(card);
+        });
+
+        // Gestion des onglets
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabType = tab.getAttribute('data-tab');
+                console.log(`Onglet sélectionné: ${tabType}`);
+            });
+        });
+
+        // Gestion de la lecture
+        document.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const title = this.getAttribute('data-title');
+                const artist = this.getAttribute('data-artist');
+                
+                document.querySelector('.player-title').textContent = title;
+                document.querySelector('.player-artist').textContent = artist;
+                
+                alert(`Lecture de "${title}" par ${artist}`);
+            });
+        });
+
+        // Barre de recherche
+        document.querySelector('.search-bar button').addEventListener('click', () => {
+            const searchTerm = document.querySelector('.search-bar input').value;
+            if (searchTerm) {
+                alert(`Recherche de: ${searchTerm}`);
+            }
+        });
+
+        // Barre de progression
+        document.querySelector('.progress').addEventListener('click', (e) => {
+            const percent = (e.offsetX / e.target.offsetWidth) * 100;
+            document.querySelector('.progress-bar').style.width = `${percent}%`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParisZik - Administration</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">Paris<span>Zik</span> Admin</div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Retour au site</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="login.html" class="btn btn-secondary">Déconnexion</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="admin-header">
+                <h1>Panel d'Administration - ParisZik</h1>
+            </div>
+            
+            <div class="admin-section">
+                <h2>Ajouter un nouveau clip ou une diffusion en direct</h2>
+                <form id="uploadForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="contentType">Type de contenu</label>
+                        <select id="contentType" required>
+                            <option value="">Sélectionner un type</option>
+                            <option value="audio">Audio</option>
+                            <option value="video">Vidéo</option>
+                            <option value="live">Diffusion en direct</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="title">Titre</label>
+                        <input type="text" id="title" placeholder="Titre du clip ou de l'événement" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="artist">Artiste</label>
+                        <input type="text" id="artist" placeholder="Nom de l'artiste" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" rows="3" placeholder="Description du contenu"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">Catégorie</label>
+                        <select id="category" required>
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="pop">Pop</option>
+                            <option value="rock">Rock</option>
+                            <option value="hiphop">Hip-Hop</option>
+                            <option value="electro">Électro</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="classical">Classique</option>
+                            <option value="world">World</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fileUpload" class="file-upload-label">
+                            <input type="file" id="fileUpload" accept="audio/*,video/*">
+                            <span>📁 Cliquez ici pour sélectionner un fichier</span>
+                            <p>(MP3, MP4, MOV - Max 200MB pour le test)</p>
+                        </label>
+                    </div>
+                    
+                    <div id="uploadStatus" class="upload-status"></div>
+                    
+                    <button type="submit" class="btn btn-primary">Uploader vers MEGA et publier</button>
+                </form>
+            </div>
+            
+            <div class="admin-section">
+                <h2>Contenus existants</h2>
+                <div class="admin-content-grid" id="existingContent">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <p>&copy; 2023 ParisZik - Panel d'Administration</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/mega.js"></script>
+    <script>
+        // Initialisation du contenu existant
+        const existingContent = document.getElementById('existingContent');
+        const contentItems = [
+            { title: "Summer Vibes", artist: "Artiste International", type: "Audio", category: "Pop", date: "15/06/2023" },
+            { title: "Concert Paris", artist: "Artiste Populaire", type: "Live", category: "Électro", date: "20/06/2023" },
+            { title: "Midnight Dreams", artist: "Nouvel Artiste", type: "Vidéo", category: "Hip-Hop", date: "10/06/2023" }
+        ];
+
+        contentItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'admin-card';
+            card.innerHTML = `
+                <div class="admin-card-header">
+                    <span>${item.title}</span>
+                    <span>${item.type}</span>
+                </div>
+                <div class="card-content">
+                    <p class="card-artist">${item.artist}</p>
+                    <p>Catégorie: ${item.category}</p>
+                    <p>Date: ${item.date}</p>
+                </div>
+                <div class="admin-card-actions">
+                    <button class="btn btn-view">Voir</button>
+                    <button class="btn btn-edit">Modifier</button>
+                    <button class="btn btn-delete">Supprimer</button>
+                </div>
+            `;
+            existingContent.appendChild(card);
+        });
+
+        // Gestion du formulaire d'upload
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const contentType = document.getElementById('contentType').value;
+            const title = document.getElementById('title').value;
+            const artist = document.getElementById('artist').value;
+            const file = document.getElementById('fileUpload').files[0];
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            if (!contentType || !title || !artist) {
+                uploadStatus.textContent = 'Veuillez remplir tous les champs obligatoires.';
+                uploadStatus.className = 'upload-status error';
+                uploadStatus.style.display = 'block';
+                return;
+            }
+            
+            if (!file) {
+                uploadStatus.textContent = 'Veuillez sélectionner un fichier à uploader.';
+                uploadStatus.className = 'upload-status error';
+                uploadStatus.style.display = 'block';
+                return;
+            }
+            
+            // Simulation d'upload vers MEGA
+            uploadStatus.textContent = 'Upload en cours vers MEGA...';
+            uploadStatus.className = 'upload-status success';
+            uploadStatus.style.display = 'block';
+            
+            setTimeout(() => {
+                uploadStatus.textContent = `✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`;
+                
+                // Ajouter le nouveau contenu à la liste
+                const newCard = document.createElement('div');
+                newCard.className = 'admin-card';
+                newCard.innerHTML = `
+                    <div class="admin-card-header">
+                        <span>${title}</span>
+                        <span>${contentType === 'audio' ? 'Audio' : contentType === 'video' ? 'Vidéo' : 'Live'}</span>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-artist">${artist}</p>
+                        <p>Catégorie: ${document.getElementById('category').value}</p>
+                        <p>Date: ${new Date().toLocaleDateString('fr-FR')}</p>
+                    </div>
+                    <div class="admin-card-actions">
+                        <button class="btn btn-view">Voir</button>
+                        <button class="btn btn-edit">Modifier</button>
+                        <button class="btn btn-delete">Supprimer</button>
+                    </div>
+                `;
+                existingContent.prepend(newCard);
+                
+                // Réinitialiser le formulaire
+                document.getElementById('uploadForm').reset();
+                document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                
+                // Ajouter les gestionnaires d'événements pour les nouveaux boutons
+                addAdminEventListeners();
+            }, 2000);
+        });
+
+        // Gestion du label de fichier
+        document.getElementById('fileUpload').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                document.querySelector('.file-upload-label span').textContent = this.files[0].name;
+            }
+        });
+
+        // Fonction pour ajouter les gestionnaires d'événements aux boutons d'administration
+        function addAdminEventListeners() {
+            document.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alert('Visualisation du contenu');
+                });
+            });
+            
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alert('Modification du contenu');
+                });
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Êtes-vous sûr de vouloir supprimer ce contenu ?')) {
+                        btn.closest('.admin-card').remove();
+                        alert('Contenu supprimé avec succès');
+                    }
+                });
+            });
+        }
+
+        // Initialiser les gestionnaires d'événements
+        addAdminEventListeners();
+    </script>
+</body>
+</html>
