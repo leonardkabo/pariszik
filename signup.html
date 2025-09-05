@@ -61,9 +61,6 @@
                 <button class="btn btn-secondary social-btn google-btn">
                     <span>S'inscrire avec Google</span>
                 </button>
-                <button class="btn btn-secondary social-btn facebook-btn">
-                    <span>S'inscrire avec Facebook</span>
-                </button>
             </div>
             
             <div class="auth-footer">
@@ -80,213 +77,214 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialiser Firebase avec la configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-                authDomain: "pariszik-6ced1.firebaseapp.com",
-                projectId: "pariszik-6ced1",
-                storageBucket: "pariszik-6ced1.firebasestorage.app",
-                messagingSenderId: "1065971112198",
-                appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
-            };
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
+            authDomain: "pariszik-6ced1.firebaseapp.com",
+            projectId: "pariszik-6ced1",
+            storageBucket: "pariszik-6ced1.firebasestorage.app",
+            messagingSenderId: "1065971112198",
+            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
+        };
+        
+        // Initialiser Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Validation du mot de passe en temps réel
+        const passwordInput = document.getElementById('signupPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        
+        confirmPasswordInput.addEventListener('input', function() {
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas');
+                confirmPasswordInput.style.borderColor = '#dc3545';
+            } else {
+                confirmPasswordInput.setCustomValidity('');
+                confirmPasswordInput.style.borderColor = '';
+            }
+        });
+        
+        // Gestion du formulaire d'inscription
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            // Initialiser Firebase
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const termsChecked = document.getElementById('terms').checked;
+            
+            // Validation des champs
+            if (!fullName || fullName.length < 2) {
+                alert('Veuillez entrer un nom complet valide');
+                return;
             }
             
-            // Validation du mot de passe en temps réel
-            const passwordInput = document.getElementById('signupPassword');
-            const confirmPasswordInput = document.getElementById('confirmPassword');
+            if (!email || !email.includes('@')) {
+                alert('Veuillez entrer une adresse email valide');
+                return;
+            }
             
-            confirmPasswordInput.addEventListener('input', function() {
-                if (passwordInput.value !== confirmPasswordInput.value) {
-                    confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas');
-                    confirmPasswordInput.style.borderColor = '#dc3545';
-                } else {
-                    confirmPasswordInput.setCustomValidity('');
-                    confirmPasswordInput.style.borderColor = '';
-                }
-            });
+            if (password.length < 6) {
+                alert('Le mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
             
-            // Gestion du formulaire d'inscription
-            document.getElementById('signupForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const fullName = document.getElementById('fullName').value.trim();
-                const email = document.getElementById('signupEmail').value.trim();
-                const password = document.getElementById('signupPassword').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const termsChecked = document.getElementById('terms').checked;
-                
-                // Validation des champs
-                if (!fullName || fullName.length < 2) {
-                    alert('Veuillez entrer un nom complet valide');
-                    return;
-                }
-                
-                if (!email || !email.includes('@')) {
-                    alert('Veuillez entrer une adresse email valide');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    alert('Le mot de passe doit contenir au moins 6 caractères');
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    alert('Les mots de passe ne correspondent pas');
-                    return;
-                }
-                
-                if (!termsChecked) {
-                    alert('Veuillez accepter les conditions d\'utilisation et la politique de confidentialité');
-                    return;
-                }
-                
-                // Afficher un indicateur de chargement
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Inscription en cours...';
-                submitBtn.disabled = true;
-                
-                // Utiliser Firebase pour l'inscription
-                firebase.auth().createUserWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        console.log('Utilisateur créé:', user);
-                        
-                        // Enregistrer les informations supplémentaires dans Firestore
-                        const db = firebase.firestore();
-                        return db.collection("users").doc(user.uid).set({
-                            fullName: fullName,
-                            email: email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            role: "user",
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            if (password !== confirmPassword) {
+                alert('Les mots de passe ne correspondent pas');
+                return;
+            }
+            
+            if (!termsChecked) {
+                alert('Veuillez accepter les conditions d\'utilisation et la politique de confidentialité');
+                return;
+            }
+            
+            // Afficher un indicateur de chargement
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Inscription en cours...';
+            submitBtn.disabled = true;
+            
+            // Utiliser Firebase pour l'inscription
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log('Utilisateur créé:', user);
+                    
+                    // Déterminer si l'utilisateur doit être admin
+                    // Ici, on vérifie si l'email correspond à votre email admin
+                    const isAdmin = email.toLowerCase() === 'leonardkabo32@gmail.com';
+                    const userRole = isAdmin ? 'admin' : 'user';
+                    
+                    // Enregistrer les informations supplémentaires dans Firestore
+                    const db = firebase.firestore();
+                    return db.collection("users").doc(user.uid).set({
+                        fullName: fullName,
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        role: userRole,
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    // Inscription réussie
+                    console.log('Informations utilisateur enregistrées avec succès');
+                    
+                    // Stocker les informations dans le localStorage
+                    const user = firebase.auth().currentUser;
+                    localStorage.setItem('userId', user.uid);
+                    localStorage.setItem('userName', fullName);
+                    localStorage.setItem('userRole', 
+                        document.getElementById('signupEmail').value.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user');
+                    
+                    // Envoyer un email de vérification
+                    const user = firebase.auth().currentUser;
+                    user.sendEmailVerification()
+                        .then(() => {
+                            console.log('Email de vérification envoyé');
+                        })
+                        .catch((error) => {
+                            console.error('Erreur lors de l\'envoi de l\'email de vérification:', error);
                         });
-                    })
-                    .then(() => {
-                        // Inscription réussie
-                        console.log('Informations utilisateur enregistrées avec succès');
-                        
-                        // Stocker les informations dans le localStorage
-                        localStorage.setItem('userId', firebase.auth().currentUser.uid);
-                        localStorage.setItem('userName', fullName);
-                        localStorage.setItem('userRole', 'user');
-                        
-                        // Envoyer un email de vérification
-                        const user = firebase.auth().currentUser;
-                        user.sendEmailVerification()
-                            .then(() => {
-                                console.log('Email de vérification envoyé');
-                            })
-                            .catch((error) => {
-                                console.error('Erreur lors de l\'envoi de l\'email de vérification:', error);
-                            });
-                        
-                        // Redirection après inscription
-                        setTimeout(() => {
-                            alert('Inscription réussie ! Un email de vérification vous a été envoyé. Vous pouvez maintenant vous connecter.');
-                            window.location.href = 'login.html';
-                        }, 1500);
-                    })
-                    .catch((error) => {
-                        // Erreur d'inscription
-                        console.error('Erreur d\'inscription:', error);
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                        
-                        let errorMessage = 'Erreur d\'inscription: ';
-                        switch (error.code) {
-                            case 'auth/email-already-in-use':
-                                errorMessage += 'Cet email est déjà utilisé.';
-                                break;
-                            case 'auth/invalid-email':
-                                errorMessage += 'Email invalide.';
-                                break;
-                            case 'auth/operation-not-allowed':
-                                errorMessage += 'Opération non autorisée.';
-                                break;
-                            case 'auth/weak-password':
-                                errorMessage += 'Le mot de passe est trop faible (minimum 6 caractères).';
-                                break;
-                            default:
-                                errorMessage += error.message;
-                        }
-                        
-                        alert(errorMessage);
-                    });
-            });
-            
-            // Gestion de l'inscription avec Google
-            document.querySelector('.google-btn').addEventListener('click', function() {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithPopup(provider)
-                    .then((result) => {
-                        const user = result.user;
-                        console.log('Inscription/Connexion Google réussie:', user);
-                        
-                        // Vérifier si l'utilisateur existe déjà dans Firestore
-                        const db = firebase.firestore();
-                        db.collection("users").doc(user.uid).get()
-                            .then((doc) => {
-                                if (!doc.exists) {
-                                    // Créer un nouveau document utilisateur
-                                    db.collection("users").doc(user.uid).set({
-                                        fullName: user.displayName || user.email.split('@')[0],
-                                        email: user.email,
-                                        photoURL: user.photoURL || '',
-                                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                        role: "user",
-                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                                    });
-                                } else {
-                                    // Mettre à jour la date de dernière connexion
-                                    db.collection("users").doc(user.uid).update({
-                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                                    });
-                                }
+                    
+                    // Redirection après inscription
+                    setTimeout(() => {
+                        alert('Inscription réussie ! Un email de vérification vous a été envoyé. Vous pouvez maintenant vous connecter.');
+                        window.location.href = 'login.html';
+                    }, 1500);
+                })
+                .catch((error) => {
+                    // Erreur d'inscription
+                    console.error('Erreur d\'inscription:', error);
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    
+                    let errorMessage = 'Erreur d\'inscription: ';
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage += 'Cet email est déjà utilisé.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage += 'Email invalide.';
+                            break;
+                        case 'auth/operation-not-allowed':
+                            errorMessage += 'Opération non autorisée.';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage += 'Le mot de passe est trop faible (minimum 6 caractères).';
+                            break;
+                        default:
+                            errorMessage += error.message;
+                    }
+                    
+                    alert(errorMessage);
+                });
+        });
+        
+        // Gestion de l'inscription avec Google
+        document.querySelector('.google-btn').addEventListener('click', function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log('Inscription/Connexion Google réussie:', user);
+                    
+                    // Vérifier si l'utilisateur existe déjà dans Firestore
+                    const db = firebase.firestore();
+                    db.collection("users").doc(user.uid).get()
+                        .then((doc) => {
+                            if (!doc.exists) {
+                                // Déterminer si l'utilisateur doit être admin
+                                const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                                const userRole = isAdmin ? 'admin' : 'user';
                                 
-                                // Stocker les informations dans le localStorage
-                                localStorage.setItem('userId', user.uid);
-                                localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
-                                localStorage.setItem('userRole', 'user');
-                                localStorage.setItem('userPhoto', user.photoURL || '');
-                                
-                                alert('Bienvenue sur ParisZik !');
-                                window.location.href = 'index.html';
-                            })
-                            .catch((error) => {
-                                console.error('Erreur lors de la création/mise à jour de l\'utilisateur:', error);
-                                alert('Erreur: ' + error.message);
-                            });
-                    })
-                    .catch((error) => {
-                        console.error('Erreur d\'inscription Google:', error);
-                        alert('Erreur d\'inscription Google: ' + error.message);
-                    });
-            });
-            
-            // Gestion de l'inscription avec Facebook (optionnel)
-            document.querySelector('.facebook-btn').addEventListener('click', function() {
-                alert('Fonctionnalité Facebook en cours de développement.');
-                // Vous pouvez implémenter Facebook Auth en ajoutant le SDK Facebook
-                // et en configurant le fournisseur Facebook dans Firebase
-            });
-            
-            // Vérifier si l'utilisateur est déjà connecté
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    // Rediriger vers la page d'accueil si déjà connecté
-                    window.location.href = 'index.html';
-                }
-            });
+                                // Créer un nouveau document utilisateur
+                                db.collection("users").doc(user.uid).set({
+                                    fullName: user.displayName || user.email.split('@')[0],
+                                    email: user.email,
+                                    photoURL: user.photoURL || '',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                    role: userRole,
+                                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            } else {
+                                // Mettre à jour la date de dernière connexion
+                                db.collection("users").doc(user.uid).update({
+                                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                            
+                            // Stocker les informations dans le localStorage
+                            localStorage.setItem('userId', user.uid);
+                            localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
+                            localStorage.setItem('userRole', 
+                                user.email.toLowerCase() === 'leonardkabo32@gmail.com' ? 'admin' : 'user');
+                            localStorage.setItem('userPhoto', user.photoURL || '');
+                            
+                            alert('Bienvenue sur ParisZik !');
+                            window.location.href = 'index.html';
+                        })
+                        .catch((error) => {
+                            console.error('Erreur lors de la création/mise à jour de l\'utilisateur:', error);
+                            alert('Erreur: ' + error.message);
+                        });
+                })
+                .catch((error) => {
+                    console.error('Erreur d\'inscription Google:', error);
+                    alert('Erreur d\'inscription Google: ' + error.message);
+                });
+        });
+        
+        // Vérifier si l'utilisateur est déjà connecté
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Rediriger vers la page d'accueil si déjà connecté
+                window.location.href = 'index.html';
+            }
         });
     </script>
 </body>

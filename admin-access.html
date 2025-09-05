@@ -16,18 +16,19 @@
             <div class="auth-header">
                 <div class="logo">Paris<span>Zik</span></div>
                 <h2>Accès Administrateur</h2>
-                <p>Veuillez entrer vos identifiants administrateur pour accéder au panel d'administration</p>
+                <p>Veuillez entrer vos identifiants pour accéder au panel d'administration</p>
+                <p class="note">Utilisez le même email que votre compte Google, mais avec le mot de passe que vous avez créé lors de l'inscription.</p>
             </div>
             
             <form id="adminAccessForm" class="auth-form">
                 <div class="form-group">
-                    <label for="adminEmail">Email Administrateur</label>
-                    <input type="email" id="adminEmail" placeholder="admin@pariszik.com" required>
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" placeholder="leonardkabo32@gmail.com" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="adminPassword">Mot de passe Administrateur</label>
-                    <input type="password" id="adminPassword" placeholder="••••••••" required>
+                    <label for="adminPassword">Mot de passe</label>
+                    <input type="password" id="adminPassword" placeholder="Votre mot de passe" required>
                 </div>
                 
                 <div class="form-options">
@@ -41,6 +42,7 @@
             
             <div class="auth-footer">
                 <p><a href="index.html">← Retour à l'accueil</a></p>
+                <p class="help-text">Si vous n'avez pas de mot de passe, <a href="signup.html">créez un compte</a> avec votre email.</p>
             </div>
         </div>
     </div>
@@ -53,8 +55,6 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
-    <script src="js/main.js"></script>
     <script>
         // Configuration Firebase
         const firebaseConfig = {
@@ -126,10 +126,10 @@
                             errorMessage += 'Compte désactivé.';
                             break;
                         case 'auth/user-not-found':
-                            errorMessage += 'Aucun compte associé à cet email.';
+                            errorMessage += 'Aucun compte associé à cet email. Veuillez vous inscrire d\'abord.';
                             break;
                         case 'auth/wrong-password':
-                            errorMessage += 'Mot de passe incorrect.';
+                            errorMessage += 'Mot de passe incorrect. Si vous avez oublié votre mot de passe, utilisez "Mot de passe oublié".';
                             break;
                         default:
                             errorMessage += error.message;
@@ -157,5 +157,31 @@
             }
         });
     </script>
+    
+    <style>
+        .note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .help-text {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .help-text a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </body>
 </html>
