@@ -25,8 +25,12 @@
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <a href="login.html" class="btn btn-secondary">Se connecter</a>
-                <a href="signup.html" class="btn btn-primary">S'inscrire</a>
+                <a href="login.html" class="btn btn-secondary" id="loginBtn">Se connecter</a>
+                <a href="signup.html" class="btn btn-primary" id="signupBtn">S'inscrire</a>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <span id="userName">Utilisateur</span>
+                    <button class="btn btn-secondary" id="logoutBtn">Déconnexion</button>
+                </div>
             </div>
         </div>
     </header>
@@ -35,56 +39,54 @@
         <div class="container">
             <div class="player-page">
                 <div class="player-content">
-                    <div class="player-media">
-                        <img src="assets/images/placeholder.jpg" alt="Clip en lecture" class="player-media-img">
-                        <!-- Pour une vidéo, vous remplacerez l'image par une balise video -->
-                        <!-- <video controls class="player-video">
-                            <source src="chemin/vers/video.mp4" type="video/mp4">
-                            Votre navigateur ne supporte pas la lecture vidéo.
-                        </video> -->
+                    <div class="player-media" id="playerMediaContainer">
+                        <!-- Le lecteur sera inséré ici dynamiquement -->
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Chargement du contenu...</p>
+                        </div>
                     </div>
                     
                     <div class="player-info-section">
-                        <h1 class="player-title">Summer Vibes</h1>
-                        <p class="player-artist">Artiste International</p>
-                        <p class="player-description">Découvrez le dernier clip de l'artiste international qui fait sensation partout dans le monde.</p>
+                        <h1 class="player-title" id="playerTitle">Chargement...</h1>
+                        <p class="player-artist" id="playerArtist">-</p>
+                        <div class="player-meta" id="playerMeta">
+                            <p><strong>Catégorie:</strong> <span id="playerCategory">-</span></p>
+                            <p><strong>Date d'upload:</strong> <span id="playerDate">-</span></p>
+                            <p><strong>Taille du fichier:</strong> <span id="playerFileSize">-</span></p>
+                        </div>
+                        <p class="player-description" id="playerDescription">-</p>
                         
                         <div class="player-stats">
                             <div class="stat-item">
-                                <span class="stat-value">2.5M</span>
+                                <span class="stat-value" id="playerViews">0</span>
                                 <span class="stat-label">Vues</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value">45K</span>
+                                <span class="stat-value" id="playerLikes">0</span>
                                 <span class="stat-label">Likes</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value">12K</span>
+                                <span class="stat-value" id="playerComments">0</span>
                                 <span class="stat-label">Commentaires</span>
                             </div>
                         </div>
                         
                         <div class="player-actions">
-                            <button class="btn btn-primary">👍 Like</button>
-                            <button class="btn btn-secondary">💬 Commenter</button>
-                            <button class="btn btn-secondary">↪️ Partager</button>
-                            <button class="btn btn-secondary">➕ Ajouter à une playlist</button>
+                            <button class="btn btn-primary" id="likeBtn">👍 Like (<span id="likeCount">0</span>)</button>
+                            <button class="btn btn-secondary" id="commentBtn">💬 Commenter</button>
+                            <button class="btn btn-secondary" id="shareBtn">↪️ Partager</button>
+                            <button class="btn btn-secondary" id="playlistBtn">➕ Ajouter à une playlist</button>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="player-controls-full">
-                    <div class="player-progress">
-                        <div class="progress-bar" style="width: 30%;"></div>
-                    </div>
-                    <div class="player-controls">
-                        <button class="control-btn">⏮</button>
-                        <button class="control-btn">⏯</button>
-                        <button class="control-btn">⏭</button>
-                        <div class="volume-control">
-                            <span>🔊</span>
-                            <div class="volume-slider">
-                                <div class="volume-bar" style="width: 70%;"></div>
+                        
+                        <div class="comments-section" id="commentsSection">
+                            <h3>Commentaires</h3>
+                            <div class="comments-list" id="commentsList">
+                                <!-- Les commentaires seront chargés ici -->
+                            </div>
+                            <div class="comment-form" id="commentForm">
+                                <textarea id="commentText" placeholder="Écrivez votre commentaire..." rows="3"></textarea>
+                                <button class="btn btn-primary" id="submitComment">Publier le commentaire</button>
                             </div>
                         </div>
                     </div>
@@ -93,8 +95,11 @@
             
             <div class="related-content">
                 <h2 class="section-title">À découvrir également</h2>
-                <div class="content-grid">
-                    <!-- Contenu généré dynamiquement -->
+                <div class="content-grid" id="relatedContent">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Chargement des contenus similaires...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -142,53 +147,754 @@
         </div>
     </footer>
 
+    <script src="js/firebase.js"></script>
+    <script src="js/content.js"></script>
     <script src="js/main.js"></script>
     <script>
-        // Générer du contenu similaire
-        const relatedContent = document.querySelector('.content-grid');
-        const relatedItems = [
-            { title: "Midnight Dreams", artist: "Nouvel Artiste", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+2" },
-            { title: "Electric Soul", artist: "Artiste Français", image: "https://via.placeholder.com/300x200/001f3f/ffffff?text=Clip+3" },
-            { title: "City Lights", artist: "Artiste Africain", image: "https://via.placeholder.com/300x200/0066ff/ffffff?text=Clip+4" },
-            { title: "Ocean Waves", artist: "Artiste Américain", image: "https://via.placeholder.com/300x200/00aaff/ffffff?text=Clip+5" }
-        ];
-
-        relatedItems.forEach(item => {
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
+            authDomain: "pariszik-6ced1.firebaseapp.com",
+            projectId: "pariszik-6ced1",
+            storageBucket: "pariszik-6ced1.firebasestorage.app",
+            messagingSenderId: "1065971112198",
+            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
+        };
+        
+        // Initialiser Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Éléments du DOM
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const userMenu = document.getElementById('userMenu');
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const playerMediaContainer = document.getElementById('playerMediaContainer');
+        const playerTitle = document.getElementById('playerTitle');
+        const playerArtist = document.getElementById('playerArtist');
+        const playerCategory = document.getElementById('playerCategory');
+        const playerDate = document.getElementById('playerDate');
+        const playerFileSize = document.getElementById('playerFileSize');
+        const playerDescription = document.getElementById('playerDescription');
+        const playerViews = document.getElementById('playerViews');
+        const playerLikes = document.getElementById('playerLikes');
+        const playerComments = document.getElementById('playerComments');
+        const likeBtn = document.getElementById('likeBtn');
+        const likeCount = document.getElementById('likeCount');
+        const commentBtn = document.getElementById('commentBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const playlistBtn = document.getElementById('playlistBtn');
+        const commentsList = document.getElementById('commentsList');
+        const commentForm = document.getElementById('commentForm');
+        const commentText = document.getElementById('commentText');
+        const submitComment = document.getElementById('submitComment');
+        const relatedContent = document.getElementById('relatedContent');
+        
+        // Variables globales
+        let currentContentId = null;
+        let currentUser = null;
+        
+        // Vérifier l'état d'authentification
+        firebase.auth().onAuthStateChanged((user) => {
+            currentUser = user;
+            if (user) {
+                // Utilisateur connecté
+                loginBtn.style.display = 'none';
+                signupBtn.style.display = 'none';
+                
+                // Récupérer le nom de l'utilisateur depuis Firestore
+                const db = firebase.firestore();
+                db.collection("users").doc(user.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            userName.textContent = userData.fullName || user.email.split('@')[0];
+                        } else {
+                            userName.textContent = user.email.split('@')[0];
+                        }
+                        
+                        userMenu.style.display = 'flex';
+                        userMenu.style.alignItems = 'center';
+                        userMenu.style.gap = '10px';
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la récupération des données utilisateur:', error);
+                        userName.textContent = user.email.split('@')[0];
+                        userMenu.style.display = 'flex';
+                        userMenu.style.alignItems = 'center';
+                        userMenu.style.gap = '10px';
+                    });
+            } else {
+                // Utilisateur non connecté
+                loginBtn.style.display = 'inline-block';
+                signupBtn.style.display = 'inline-block';
+                userMenu.style.display = 'none';
+            }
+            
+            // Charger le contenu après avoir vérifié l'authentification
+            loadContentFromUrl();
+        });
+        
+        // Gestion de la déconnexion
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                firebase.auth().signOut()
+                    .then(() => {
+                        console.log('Déconnexion réussie');
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userPhoto');
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la déconnexion:', error);
+                        alert('Erreur lors de la déconnexion: ' + error.message);
+                    });
+            });
+        }
+        
+        // Charger le contenu à partir de l'URL
+        function loadContentFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const contentId = urlParams.get('id');
+            
+            if (contentId) {
+                currentContentId = contentId;
+                loadContentById(contentId);
+            } else {
+                // Rediriger vers la page d'accueil si aucun ID n'est fourni
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Charger un contenu par ID
+        async function loadContentById(contentId) {
+            try {
+                const content = await window.ParisZikContent.loadContentById(contentId);
+                
+                // Mettre à jour l'interface utilisateur
+                updateUIWithContent(content);
+                
+                // Ajouter une vue
+                await window.ParisZikContent.addView(contentId);
+                
+                // Charger les commentaires
+                loadComments(contentId);
+                
+                // Charger les contenus similaires
+                loadRelatedContent(content);
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement du contenu:', error);
+                playerMediaContainer.innerHTML = `
+                    <div class="error-message">
+                        <h3>Erreur</h3>
+                        <p>Impossible de charger ce contenu. Veuillez réessayer plus tard.</p>
+                        <button class="btn btn-primary" onclick="window.location.href='index.html'">Retour à l'accueil</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Mettre à jour l'interface utilisateur avec le contenu
+        function updateUIWithContent(content) {
+            // Mettre à jour les informations du contenu
+            playerTitle.textContent = content.title;
+            playerArtist.textContent = content.artist;
+            playerCategory.textContent = content.category || 'Non spécifié';
+            
+            // Formater la date
+            const date = content.uploadedAt?.toDate ? content.uploadedAt.toDate() : new Date(content.uploadedAt);
+            playerDate.textContent = date ? date.toLocaleDateString('fr-FR') : 'Date inconnue';
+            
+            // Formater la taille du fichier
+            playerFileSize.textContent = formatFileSize(content.fileSize);
+            
+            // Description
+            playerDescription.textContent = content.description || 'Aucune description disponible.';
+            
+            // Statistiques
+            playerViews.textContent = content.views || 0;
+            playerLikes.textContent = content.likes || 0;
+            playerComments.textContent = content.comments || 0;
+            likeCount.textContent = content.likes || 0;
+            
+            // Créer le lecteur approprié selon le type de fichier
+            createMediaPlayer(content);
+        }
+        
+        // Créer le lecteur média approprié
+        function createMediaPlayer(content) {
+            let playerHTML = '';
+            
+            if (content.fileType === 'audio' || content.contentType === 'audio') {
+                // Lecteur audio
+                playerHTML = `
+                    <div class="audio-player">
+                        <audio controls class="media-player" id="mediaPlayer">
+                            <source src="${content.fileUrl}" type="audio/mpeg">
+                            Votre navigateur ne supporte pas la lecture audio.
+                        </audio>
+                    </div>
+                `;
+            } else if (content.fileType === 'video' || content.contentType === 'video' || content.contentType === 'live') {
+                // Lecteur vidéo
+                playerHTML = `
+                    <div class="video-player">
+                        <video controls class="media-player" id="mediaPlayer" poster="${content.thumbnail || ''}">
+                            <source src="${content.fileUrl}" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture vidéo.
+                        </video>
+                        ${content.contentType === 'live' ? '<div class="live-badge">🔴 EN DIRECT</div>' : ''}
+                    </div>
+                `;
+            } else {
+                // Type de fichier non supporté
+                playerHTML = `
+                    <div class="error-message">
+                        <h3>Type de fichier non supporté</h3>
+                        <p>Ce type de fichier (${content.fileType}) n'est pas supporté pour la lecture en ligne.</p>
+                    </div>
+                `;
+            }
+            
+            playerMediaContainer.innerHTML = playerHTML;
+            
+            // Ajouter des gestionnaires d'événements pour le lecteur
+            const mediaPlayer = document.getElementById('mediaPlayer');
+            if (mediaPlayer) {
+                // Gestion de la lecture
+                mediaPlayer.addEventListener('play', () => {
+                    console.log('Lecture démarrée');
+                });
+                
+                mediaPlayer.addEventListener('pause', () => {
+                    console.log('Lecture en pause');
+                });
+                
+                mediaPlayer.addEventListener('ended', () => {
+                    console.log('Lecture terminée');
+                });
+                
+                // Gestion des erreurs
+                mediaPlayer.addEventListener('error', () => {
+                    console.error('Erreur lors de la lecture du média');
+                    playerMediaContainer.innerHTML = `
+                        <div class="error-message">
+                            <h3>Erreur de lecture</h3>
+                            <p>Impossible de lire ce fichier. Veuillez réessayer plus tard.</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Charger les commentaires
+        async function loadComments(contentId) {
+            try {
+                const comments = await window.ParisZikContent.loadComments(contentId);
+                
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '<p class="no-comments">Aucun commentaire pour le moment. Soyez le premier à commenter !</p>';
+                } else {
+                    commentsList.innerHTML = '';
+                    comments.forEach(comment => {
+                        const commentDate = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(comment.createdAt);
+                        const formattedDate = commentDate ? commentDate.toLocaleDateString('fr-FR') + ' à ' + commentDate.toLocaleTimeString('fr-FR') : 'Date inconnue';
+                        
+                        const commentElement = document.createElement('div');
+                        commentElement.className = 'comment';
+                        commentElement.innerHTML = `
+                            <div class="comment-header">
+                                <span class="comment-author">${comment.userName || 'Utilisateur'}</span>
+                                <span class="comment-date">${formattedDate}</span>
+                            </div>
+                            <div class="comment-body">
+                                <p>${comment.text}</p>
+                            </div>
+                        `;
+                        commentsList.appendChild(commentElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des commentaires:', error);
+                commentsList.innerHTML = '<p class="error">Erreur lors du chargement des commentaires.</p>';
+            }
+        }
+        
+        // Charger les contenus similaires
+        async function loadRelatedContent(content) {
+            try {
+                // Charger les contenus de la même catégorie
+                const db = firebase.firestore();
+                const relatedQuery = db.collection("contents")
+                    .where("category", "==", content.category)
+                    .where("id", "!=", content.id)
+                    .orderBy("uploadedAt", "desc")
+                    .limit(4);
+                
+                const snapshot = await relatedQuery.get();
+                
+                relatedContent.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    // Si aucun contenu dans la même catégorie, charger les plus populaires
+                    const popularQuery = db.collection("contents")
+                        .orderBy("views", "desc")
+                        .limit(4);
+                    
+                    const popularSnapshot = await popularQuery.get();
+                    
+                    if (popularSnapshot.empty) {
+                        relatedContent.innerHTML = '<p class="no-related">Aucun contenu similaire disponible pour le moment.</p>';
+                    } else {
+                        popularSnapshot.forEach(doc => {
+                            addRelatedContentCard({
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        });
+                    }
+                } else {
+                    snapshot.forEach(doc => {
+                        addRelatedContentCard({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des contenus similaires:', error);
+                relatedContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus similaires.</p>';
+            }
+        }
+        
+        // Ajouter une carte de contenu similaire
+        function addRelatedContentCard(content) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
-                <img src="${item.image}" alt="${item.title}" class="card-img">
+                <img src="${content.thumbnail || 'https://via.placeholder.com/300x200/0066ff/ffffff?text=' + encodeURIComponent(content.title.substring(0, 2))}" alt="${content.title}" class="card-img">
                 <div class="card-content">
-                    <h3 class="card-title">${item.title}</h3>
-                    <p class="card-artist">${item.artist}</p>
+                    <h3 class="card-title">${content.title}</h3>
+                    <p class="card-artist">${content.artist}</p>
                     <div class="card-actions">
-                        <div class="play-btn" data-title="${item.title}" data-artist="${item.artist}">▶</div>
+                        <a href="player.html?id=${content.id}" class="play-btn" title="Lire ce contenu">▶</a>
+                        ${content.isLive ? '<div class="live-badge">LIVE</div>' : ''}
                     </div>
                 </div>
             `;
             relatedContent.appendChild(card);
+        }
+        
+        // Gestion du like
+        likeBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                if (confirm('Vous devez être connecté pour liker ce contenu. Voulez-vous vous connecter ?')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+            
+            if (!currentContentId) return;
+            
+            try {
+                // Désactiver le bouton pendant le traitement
+                likeBtn.disabled = true;
+                likeBtn.textContent = 'Ajout du like...';
+                
+                // Ajouter un like
+                await window.ParisZikContent.addLike(currentContentId);
+                
+                // Mettre à jour l'affichage
+                const currentLikes = parseInt(playerLikes.textContent) + 1;
+                playerLikes.textContent = currentLikes;
+                likeCount.textContent = currentLikes;
+                
+                // Changer le style du bouton pour indiquer qu'il a été liké
+                likeBtn.style.background = '#28a745';
+                likeBtn.innerHTML = `👍 Liké (<span id="likeCount">${currentLikes}</span>)`;
+                
+                // Réactiver le bouton après 2 secondes
+                setTimeout(() => {
+                    likeBtn.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout du like:', error);
+                alert('Erreur lors de l\'ajout du like: ' + error.message);
+                likeBtn.disabled = false;
+                likeBtn.textContent = `👍 Like (${likeCount.textContent})`;
+            }
         });
-
-        // Gestion de la lecture
-        document.querySelectorAll('.play-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const title = this.getAttribute('data-title');
-                const artist = this.getAttribute('data-artist');
-                alert(`Lecture de "${title}" par ${artist}`);
-            });
+        
+        // Gestion de l'ajout de commentaire
+        submitComment.addEventListener('click', async () => {
+            if (!currentUser) {
+                if (confirm('Vous devez être connecté pour commenter ce contenu. Voulez-vous vous connecter ?')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+            
+            const text = commentText.value.trim();
+            if (!text) {
+                alert('Veuillez entrer un commentaire.');
+                return;
+            }
+            
+            if (!currentContentId) return;
+            
+            try {
+                // Désactiver le bouton pendant le traitement
+                submitComment.disabled = true;
+                submitComment.textContent = 'Publication en cours...';
+                
+                // Ajouter le commentaire
+                const commentData = {
+                    text: text,
+                    userName: userName.textContent,
+                    userId: currentUser.uid
+                };
+                
+                await window.ParisZikContent.addComment(currentContentId, commentData);
+                
+                // Mettre à jour l'affichage
+                const currentComments = parseInt(playerComments.textContent) + 1;
+                playerComments.textContent = currentComments;
+                
+                // Ajouter le commentaire à la liste
+                const commentDate = new Date();
+                const formattedDate = commentDate.toLocaleDateString('fr-FR') + ' à ' + commentDate.toLocaleTimeString('fr-FR');
+                
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment';
+                commentElement.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${userName.textContent}</span>
+                        <span class="comment-date">${formattedDate}</span>
+                    </div>
+                    <div class="comment-body">
+                        <p>${text}</p>
+                    </div>
+                `;
+                commentsList.appendChild(commentElement);
+                
+                // Effacer le champ de texte
+                commentText.value = '';
+                
+                // Réactiver le bouton
+                submitComment.disabled = false;
+                submitComment.textContent = 'Publier le commentaire';
+                
+            } catch (error) {
+                console.error('Erreur lors de la publication du commentaire:', error);
+                alert('Erreur lors de la publication du commentaire: ' + error.message);
+                submitComment.disabled = false;
+                submitComment.textContent = 'Publier le commentaire';
+            }
         });
-
-        // Gestion de la barre de progression
-        document.querySelector('.player-progress').addEventListener('click', function(e) {
-            const percent = (e.offsetX / this.offsetWidth) * 100;
-            this.querySelector('.progress-bar').style.width = `${percent}%`;
+        
+        // Gestion du partage
+        shareBtn.addEventListener('click', () => {
+            const shareUrl = window.location.href;
+            const shareText = `Découvrez "${playerTitle.textContent}" par ${playerArtist.textContent} sur ParisZik !`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: playerTitle.textContent,
+                    text: shareText,
+                    url: shareUrl
+                })
+                .then(() => console.log('Contenu partagé avec succès'))
+                .catch((error) => console.error('Erreur lors du partage:', error));
+            } else {
+                // Fallback pour les navigateurs qui ne supportent pas l'API Web Share
+                navigator.clipboard.writeText(shareUrl)
+                    .then(() => {
+                        alert('Lien copié dans le presse-papiers ! Vous pouvez maintenant le partager.');
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la copie du lien:', error);
+                        alert('Impossible de copier le lien. Veuillez le copier manuellement: ' + shareUrl);
+                    });
+            }
         });
-
-        // Gestion du volume
-        document.querySelector('.volume-slider').addEventListener('click', function(e) {
-            const percent = (e.offsetX / this.offsetWidth) * 100;
-            this.querySelector('.volume-bar').style.width = `${percent}%`;
+        
+        // Gestion de l'ajout à une playlist
+        playlistBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                if (confirm('Vous devez être connecté pour ajouter ce contenu à une playlist. Voulez-vous vous connecter ?')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+            
+            alert('Fonctionnalité "Ajouter à une playlist" en cours de développement.');
+            // Dans une version future, vous ouvririez un modal pour choisir une playlist
         });
+        
+        // Fonction utilitaire pour formater la taille des fichiers
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
     </script>
+    
+    <style>
+        /* Styles supplémentaires pour la page de lecture */
+        .player-page {
+            margin: 2rem 0;
+        }
+        
+        .player-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .player-media {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #000;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .media-player {
+            width: 100%;
+            background: #000;
+            max-height: 80vh;
+        }
+        
+        .audio-player, .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+        
+        .video-player {
+            position: relative;
+        }
+        
+        .live-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 700;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .player-info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .player-info-section h1 {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .player-meta {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .player-meta p {
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .player-description {
+            color: var(--gray);
+            line-height: 1.8;
+            font-style: italic;
+        }
+        
+        .player-stats {
+            display: flex;
+            gap: 2rem;
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .player-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .comments-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+        
+        .comments-section h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .comment {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        .comment-date {
+            color: var(--gray);
+        }
+        
+        .comment-body p {
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .comment-form {
+            margin-top: 1rem;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+        
+        .no-comments {
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            padding: 1rem;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger);
+        }
+        
+        .error-message h3 {
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-related {
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            padding: 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .player-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .player-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </body>
 </html>

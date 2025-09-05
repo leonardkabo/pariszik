@@ -329,3 +329,38 @@ window.ParisZikUtils = {
 if (typeof contentManager !== 'undefined') {
     window.ParisZikContent = contentManager;
 }
+
+// Fonction pour jouer un contenu
+function playContent(contentId, title, artist) {
+    // Vérifier si l'utilisateur est connecté
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        if (confirm('Vous devez être connecté pour écouter ce contenu. Voulez-vous vous connecter ?')) {
+            window.location.href = 'login.html';
+            return;
+        }
+        return;
+    }
+    
+    // Rediriger vers la page de lecture avec l'ID du contenu
+    window.location.href = `player.html?id=${contentId}`;
+}
+
+// Mettre à jour les gestionnaires d'événements pour les boutons de lecture
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('play-btn') || e.target.closest('.play-btn')) {
+        e.preventDefault();
+        
+        const playBtn = e.target.classList.contains('play-btn') ? e.target : e.target.closest('.play-btn');
+        const contentId = playBtn.getAttribute('data-id');
+        const title = playBtn.getAttribute('data-title');
+        const artist = playBtn.getAttribute('data-artist');
+        
+        if (contentId) {
+            playContent(contentId, title, artist);
+        } else {
+            // Pour les cartes dans la page d'accueil
+            alert('Lecture de "' + title + '" par ' + artist);
+        }
+    }
+});
