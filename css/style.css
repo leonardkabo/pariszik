@@ -1069,3 +1069,225 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+
+/* Styles supplémentaires pour l'authentification et l'administration */
+
+/* User Menu */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-menu span {
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+/* Social Login Buttons */
+.social-login {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 1.5rem 0;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.google-btn {
+    background-color: #fff;
+    color: #444;
+    border: 1px solid #dadce0;
+}
+
+.google-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #a3a3a3;
+}
+
+.facebook-btn {
+    background-color: #1877f2;
+    color: white;
+    border: none;
+}
+
+.facebook-btn:hover {
+    background-color: #166fe5;
+}
+
+.auth-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem 0;
+    color: var(--gray);
+}
+
+.auth-separator span {
+    padding: 0 10px;
+    background: var(--light);
+    position: relative;
+    top: -10px;
+}
+
+/* Password Requirements */
+.password-requirements {
+    margin-top: 5px;
+    color: var(--gray);
+    font-size: 0.85rem;
+}
+
+/* Admin Styles */
+.admin-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary);
+}
+
+.admin-header h1 {
+    color: var(--secondary);
+    font-size: 2rem;
+}
+
+.admin-header p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.admin-section {
+    background: var(--light);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    border: 2px dashed var(--primary);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.file-upload-label:hover {
+    background: rgba(0, 102, 255, 0.05);
+    border-color: var(--accent);
+}
+
+.file-upload-label input {
+    display: none;
+}
+
+.upload-status {
+    padding: 1rem;
+    border-radius: 8px;
+    display: none;
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.upload-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.upload-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+/* Warning Box */
+.warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ffeaa7;
+    margin: 1rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-menu {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .social-login {
+        gap: 8px;
+    }
+    
+    .admin-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animation for admin actions */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-card {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* Loading state */
+.btn[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-online {
+    background-color: #28a745;
+}
+
+.status-offline {
+    background-color: #dc3545;
+}
+
+/* Content stats */
+.content-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}

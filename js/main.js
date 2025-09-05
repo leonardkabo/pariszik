@@ -324,3 +324,8 @@ window.ParisZikUtils = {
     confirmAction,
     loadContent
 };
+
+// Inclure le gestionnaire de contenus
+if (typeof contentManager !== 'undefined') {
+    window.ParisZikContent = contentManager;
+}

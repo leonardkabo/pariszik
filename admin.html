@@ -21,7 +21,7 @@
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <a href="login.html" class="btn btn-secondary">Déconnexion</a>
+                <button class="btn btn-secondary" id="logoutBtn">Déconnexion</button>
             </div>
         </div>
     </header>
@@ -30,68 +30,80 @@
         <div class="container">
             <div class="admin-header">
                 <h1>Panel d'Administration - ParisZik</h1>
+                <p id="adminStatus">Vérification des permissions...</p>
             </div>
             
-            <div class="admin-section">
-                <h2>Ajouter un nouveau clip ou une diffusion en direct</h2>
-                <form id="uploadForm" class="admin-form">
-                    <div class="form-group">
-                        <label for="contentType">Type de contenu</label>
-                        <select id="contentType" required>
-                            <option value="">Sélectionner un type</option>
-                            <option value="audio">Audio</option>
-                            <option value="video">Vidéo</option>
-                            <option value="live">Diffusion en direct</option>
-                        </select>
+            <div id="adminContent" style="display: none;">
+                <div class="admin-section">
+                    <h2>Ajouter un nouveau clip ou une diffusion en direct</h2>
+                    <form id="uploadForm" class="admin-form">
+                        <div class="form-group">
+                            <label for="contentType">Type de contenu</label>
+                            <select id="contentType" required>
+                                <option value="">Sélectionner un type</option>
+                                <option value="audio">Audio</option>
+                                <option value="video">Vidéo</option>
+                                <option value="live">Diffusion en direct</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="title">Titre</label>
+                            <input type="text" id="title" placeholder="Titre du clip ou de l'événement" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="artist">Artiste</label>
+                            <input type="text" id="artist" placeholder="Nom de l'artiste" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" rows="3" placeholder="Description du contenu"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">Catégorie</label>
+                            <select id="category" required>
+                                <option value="">Sélectionner une catégorie</option>
+                                <option value="pop">Pop</option>
+                                <option value="rock">Rock</option>
+                                <option value="hiphop">Hip-Hop</option>
+                                <option value="electro">Électro</option>
+                                <option value="jazz">Jazz</option>
+                                <option value="classical">Classique</option>
+                                <option value="world">World</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fileUpload" class="file-upload-label">
+                                <input type="file" id="fileUpload" accept="audio/*,video/*">
+                                <span>📁 Cliquez ici pour sélectionner un fichier</span>
+                                <p>(MP3, MP4, MOV - Max 200MB pour le test)</p>
+                            </label>
+                        </div>
+                        
+                        <div id="uploadStatus" class="upload-status"></div>
+                        
+                        <button type="submit" class="btn btn-primary">Uploader vers MEGA et publier</button>
+                    </form>
+                </div>
+                
+                <div class="admin-section">
+                    <h2>Contenus existants</h2>
+                    <div class="admin-content-grid" id="existingContent">
+                        <!-- Contenu généré dynamiquement -->
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="title">Titre</label>
-                        <input type="text" id="title" placeholder="Titre du clip ou de l'événement" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="artist">Artiste</label>
-                        <input type="text" id="artist" placeholder="Nom de l'artiste" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea id="description" rows="3" placeholder="Description du contenu"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="category">Catégorie</label>
-                        <select id="category" required>
-                            <option value="">Sélectionner une catégorie</option>
-                            <option value="pop">Pop</option>
-                            <option value="rock">Rock</option>
-                            <option value="hiphop">Hip-Hop</option>
-                            <option value="electro">Électro</option>
-                            <option value="jazz">Jazz</option>
-                            <option value="classical">Classique</option>
-                            <option value="world">World</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="fileUpload" class="file-upload-label">
-                            <input type="file" id="fileUpload" accept="audio/*,video/*">
-                            <span>📁 Cliquez ici pour sélectionner un fichier</span>
-                            <p>(MP3, MP4, MOV - Max 200MB pour le test)</p>
-                        </label>
-                    </div>
-                    
-                    <div id="uploadStatus" class="upload-status"></div>
-                    
-                    <button type="submit" class="btn btn-primary">Uploader vers MEGA et publier</button>
-                </form>
+                </div>
             </div>
             
-            <div class="admin-section">
-                <h2>Contenus existants</h2>
-                <div class="admin-content-grid" id="existingContent">
-                    <!-- Contenu généré dynamiquement -->
+            <div id="accessDenied" style="display: none;">
+                <div class="warning" style="padding: 2rem; text-align: center;">
+                    <h3>⛔ Accès refusé</h3>
+                    <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+                    <p>Seuls les administrateurs peuvent accéder au panel d'administration.</p>
+                    <a href="index.html" class="btn btn-primary" style="margin-top: 1rem;">Retour à l'accueil</a>
                 </div>
             </div>
         </div>
@@ -105,134 +117,335 @@
         </div>
     </footer>
 
-    <script src="js/main.js"></script>
+    <script src="js/firebase.js"></script>
     <script src="js/mega.js"></script>
+    <script src="js/main.js"></script>
     <script>
-        // Initialisation du contenu existant
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
+            authDomain: "pariszik-6ced1.firebaseapp.com",
+            projectId: "pariszik-6ced1",
+            storageBucket: "pariszik-6ced1.firebasestorage.app",
+            messagingSenderId: "1065971112198",
+            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
+        };
+        
+        // Initialiser Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Éléments du DOM
+        const adminStatus = document.getElementById('adminStatus');
+        const adminContent = document.getElementById('adminContent');
+        const accessDenied = document.getElementById('accessDenied');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileLabel = document.querySelector('.file-upload-label span');
+        const uploadStatus = document.getElementById('uploadStatus');
         const existingContent = document.getElementById('existingContent');
-        const contentItems = [
-            { title: "Summer Vibes", artist: "Artiste International", type: "Audio", category: "Pop", date: "15/06/2023" },
-            { title: "Concert Paris", artist: "Artiste Populaire", type: "Live", category: "Électro", date: "20/06/2023" },
-            { title: "Midnight Dreams", artist: "Nouvel Artiste", type: "Vidéo", category: "Hip-Hop", date: "10/06/2023" }
-        ];
-
-        contentItems.forEach(item => {
+        
+        // Vérifier l'authentification et les permissions
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Vérifier si l'utilisateur est admin
+                const db = firebase.firestore();
+                db.collection("users").doc(user.uid).get()
+                    .then((doc) => {
+                        if (doc.exists && doc.data().role === 'admin') {
+                            adminStatus.textContent = '✅ Accès autorisé - Bienvenue administrateur';
+                            adminStatus.style.color = '#28a745';
+                            adminContent.style.display = 'block';
+                            initializeAdminPage();
+                        } else {
+                            adminStatus.textContent = '⛔ Accès refusé';
+                            adminStatus.style.color = '#dc3545';
+                            accessDenied.style.display = 'block';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la vérification des permissions:', error);
+                        adminStatus.textContent = '❌ Erreur de vérification des permissions';
+                        adminStatus.style.color = '#dc3545';
+                        accessDenied.style.display = 'block';
+                    });
+            } else {
+                // Rediriger vers la page de connexion
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Gestion de la déconnexion
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                firebase.auth().signOut()
+                    .then(() => {
+                        console.log('Déconnexion réussie');
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userPhoto');
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la déconnexion:', error);
+                        alert('Erreur lors de la déconnexion: ' + error.message);
+                    });
+            });
+        }
+        
+        // Initialiser la page d'administration
+        function initializeAdminPage() {
+            // Initialiser MEGA
+            if (window.ParisZikMega && window.ParisZikMega.initializeForAdmin) {
+                window.ParisZikMega.initializeForAdmin().then(success => {
+                    if (success) {
+                        console.log('MEGA initialisé avec succès');
+                    } else {
+                        console.warn('Échec de l\'initialisation de MEGA - fonctionnalités limitées');
+                    }
+                });
+            }
+            
+            // Charger les contenus existants depuis Firestore
+            loadExistingContent();
+            
+            // Gestion du formulaire d'upload
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const contentType = document.getElementById('contentType').value;
+                const title = document.getElementById('title').value;
+                const artist = document.getElementById('artist').value;
+                const file = fileUpload.files[0];
+                
+                if (!contentType || !title || !artist) {
+                    uploadStatus.textContent = 'Veuillez remplir tous les champs obligatoires.';
+                    uploadStatus.className = 'upload-status error';
+                    uploadStatus.style.display = 'block';
+                    return;
+                }
+                
+                if (!file) {
+                    uploadStatus.textContent = 'Veuillez sélectionner un fichier à uploader.';
+                    uploadStatus.className = 'upload-status error';
+                    uploadStatus.style.display = 'block';
+                    return;
+                }
+                
+                // Vérifier la taille du fichier (max 200MB pour le test)
+                if (file.size > 200 * 1024 * 1024) {
+                    uploadStatus.textContent = 'Le fichier est trop volumineux (max 200MB).';
+                    uploadStatus.className = 'upload-status error';
+                    uploadStatus.style.display = 'block';
+                    return;
+                }
+                
+                // Simuler l'upload vers MEGA
+                uploadStatus.textContent = 'Upload en cours vers MEGA...';
+                uploadStatus.className = 'upload-status success';
+                uploadStatus.style.display = 'block';
+                
+                // Désactiver le bouton pendant l'upload
+                const submitBtn = uploadForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Upload en cours...';
+                submitBtn.disabled = true;
+                
+                setTimeout(() => {
+                    // Simuler le succès de l'upload
+                    const fileUrl = `https://mega.nz/file/${Date.now()}`;
+                    
+                    // Enregistrer le contenu dans Firestore
+                    const db = firebase.firestore();
+                    const contentData = {
+                        title: title,
+                        artist: artist,
+                        description: document.getElementById('description').value,
+                        category: document.getElementById('category').value,
+                        contentType: contentType,
+                        fileUrl: fileUrl,
+                        fileName: file.name,
+                        fileSize: file.size,
+                        uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        uploadedBy: firebase.auth().currentUser.uid,
+                        views: 0,
+                        likes: 0,
+                        isLive: contentType === 'live'
+                    };
+                    
+                    db.collection("contents").add(contentData)
+                        .then((docRef) => {
+                            uploadStatus.textContent = `✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`;
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                            
+                            // Ajouter le nouveau contenu à la liste
+                            addContentToGrid({
+                                id: docRef.id,
+                                ...contentData
+                            });
+                            
+                            // Réinitialiser le formulaire
+                            uploadForm.reset();
+                            fileLabel.textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                        })
+                        .catch((error) => {
+                            console.error('Erreur lors de l\'enregistrement du contenu:', error);
+                            uploadStatus.textContent = `❌ Erreur lors de la publication: ${error.message}`;
+                            uploadStatus.className = 'upload-status error';
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                        });
+                }, 2000);
+            });
+            
+            // Gestion du label de fichier
+            fileUpload.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    fileLabel.textContent = this.files[0].name;
+                }
+            });
+        }
+        
+        // Charger les contenus existants depuis Firestore
+        function loadExistingContent() {
+            const db = firebase.firestore();
+            const contentsRef = db.collection("contents").orderBy("uploadedAt", "desc");
+            
+            contentsRef.get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        // Ajouter du contenu par défaut si la collection est vide
+                        addDefaultContent();
+                    } else {
+                        querySnapshot.forEach((doc) => {
+                            addContentToGrid({
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error('Erreur lors du chargement des contenus:', error);
+                    // Ajouter du contenu par défaut en cas d'erreur
+                    addDefaultContent();
+                });
+        }
+        
+        // Ajouter du contenu par défaut
+        function addDefaultContent() {
+            const defaultContent = [
+                { 
+                    title: "Summer Vibes", 
+                    artist: "Artiste International", 
+                    contentType: "Audio", 
+                    category: "Pop", 
+                    uploadedAt: new Date(), 
+                    views: 2500000, 
+                    likes: 45000,
+                    isLive: false
+                },
+                { 
+                    title: "Concert Paris", 
+                    artist: "Artiste Populaire", 
+                    contentType: "Live", 
+                    category: "Électro", 
+                    uploadedAt: new Date(Date.now() - 86400000), 
+                    views: 15432,
+                    likes: 2345,
+                    isLive: true
+                },
+                { 
+                    title: "Midnight Dreams", 
+                    artist: "Nouvel Artiste", 
+                    contentType: "Vidéo", 
+                    category: "Hip-Hop", 
+                    uploadedAt: new Date(Date.now() - 172800000), 
+                    views: 876543,
+                    likes: 12345,
+                    isLive: false
+                }
+            ];
+            
+            defaultContent.forEach(item => {
+                addContentToGrid(item);
+            });
+        }
+        
+        // Ajouter un contenu à la grille
+        function addContentToGrid(content) {
             const card = document.createElement('div');
             card.className = 'admin-card';
+            card.dataset.id = content.id || 'default';
+            
+            // Formater la date
+            const date = content.uploadedAt?.toDate ? content.uploadedAt.toDate() : content.uploadedAt;
+            const formattedDate = date ? new Date(date).toLocaleDateString('fr-FR') : 'Date inconnue';
+            
             card.innerHTML = `
                 <div class="admin-card-header">
-                    <span>${item.title}</span>
-                    <span>${item.type}</span>
+                    <span>${content.title}</span>
+                    <span>${content.contentType}</span>
                 </div>
                 <div class="card-content">
-                    <p class="card-artist">${item.artist}</p>
-                    <p>Catégorie: ${item.category}</p>
-                    <p>Date: ${item.date}</p>
+                    <p class="card-artist">${content.artist}</p>
+                    <p>Catégorie: ${content.category}</p>
+                    <p>Date: ${formattedDate}</p>
+                    <p>Vues: ${content.views || 0} | Likes: ${content.likes || 0}</p>
                 </div>
                 <div class="admin-card-actions">
-                    <button class="btn btn-view">Voir</button>
-                    <button class="btn btn-edit">Modifier</button>
-                    <button class="btn btn-delete">Supprimer</button>
+                    <button class="btn btn-view" data-id="${content.id || 'default'}">Voir</button>
+                    <button class="btn btn-edit" data-id="${content.id || 'default'}">Modifier</button>
+                    <button class="btn btn-delete" data-id="${content.id || 'default'}">Supprimer</button>
                 </div>
             `;
             existingContent.appendChild(card);
-        });
-
-        // Gestion du formulaire d'upload
-        document.getElementById('uploadForm').addEventListener('submit', function(e) {
-            e.preventDefault();
             
-            const contentType = document.getElementById('contentType').value;
-            const title = document.getElementById('title').value;
-            const artist = document.getElementById('artist').value;
-            const file = document.getElementById('fileUpload').files[0];
-            const uploadStatus = document.getElementById('uploadStatus');
-            
-            if (!contentType || !title || !artist) {
-                uploadStatus.textContent = 'Veuillez remplir tous les champs obligatoires.';
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.style.display = 'block';
-                return;
-            }
-            
-            if (!file) {
-                uploadStatus.textContent = 'Veuillez sélectionner un fichier à uploader.';
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.style.display = 'block';
-                return;
-            }
-            
-            // Simulation d'upload vers MEGA
-            uploadStatus.textContent = 'Upload en cours vers MEGA...';
-            uploadStatus.className = 'upload-status success';
-            uploadStatus.style.display = 'block';
-            
-            setTimeout(() => {
-                uploadStatus.textContent = `✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`;
-                
-                // Ajouter le nouveau contenu à la liste
-                const newCard = document.createElement('div');
-                newCard.className = 'admin-card';
-                newCard.innerHTML = `
-                    <div class="admin-card-header">
-                        <span>${title}</span>
-                        <span>${contentType === 'audio' ? 'Audio' : contentType === 'video' ? 'Vidéo' : 'Live'}</span>
-                    </div>
-                    <div class="card-content">
-                        <p class="card-artist">${artist}</p>
-                        <p>Catégorie: ${document.getElementById('category').value}</p>
-                        <p>Date: ${new Date().toLocaleDateString('fr-FR')}</p>
-                    </div>
-                    <div class="admin-card-actions">
-                        <button class="btn btn-view">Voir</button>
-                        <button class="btn btn-edit">Modifier</button>
-                        <button class="btn btn-delete">Supprimer</button>
-                    </div>
-                `;
-                existingContent.prepend(newCard);
-                
-                // Réinitialiser le formulaire
-                document.getElementById('uploadForm').reset();
-                document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
-                
-                // Ajouter les gestionnaires d'événements pour les nouveaux boutons
-                addAdminEventListeners();
-            }, 2000);
-        });
-
-        // Gestion du label de fichier
-        document.getElementById('fileUpload').addEventListener('change', function() {
-            if (this.files.length > 0) {
-                document.querySelector('.file-upload-label span').textContent = this.files[0].name;
-            }
-        });
-
+            // Ajouter les gestionnaires d'événements
+            addAdminEventListeners();
+        }
+        
         // Fonction pour ajouter les gestionnaires d'événements aux boutons d'administration
         function addAdminEventListeners() {
             document.querySelectorAll('.btn-view').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    alert('Visualisation du contenu');
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    alert('Visualisation du contenu avec ID: ' + id);
                 });
             });
             
             document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    alert('Modification du contenu');
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    alert('Modification du contenu avec ID: ' + id);
+                    // Ici, vous pouvez ouvrir un modal ou rediriger vers une page d'édition
                 });
             });
             
             document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
                     if (confirm('Êtes-vous sûr de vouloir supprimer ce contenu ?')) {
-                        btn.closest('.admin-card').remove();
-                        alert('Contenu supprimé avec succès');
+                        // Supprimer le contenu de Firestore
+                        const db = firebase.firestore();
+                        db.collection("contents").doc(id).delete()
+                            .then(() => {
+                                console.log('Contenu supprimé avec succès');
+                                this.closest('.admin-card').remove();
+                                alert('Contenu supprimé avec succès');
+                            })
+                            .catch((error) => {
+                                console.error('Erreur lors de la suppression du contenu:', error);
+                                alert('Erreur lors de la suppression: ' + error.message);
+                            });
                     }
                 });
             });
         }
-
-        // Initialiser les gestionnaires d'événements
-        addAdminEventListeners();
     </script>
 </body>
 </html>

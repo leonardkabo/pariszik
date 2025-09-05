@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Découvrez la musique du monde entier</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Firebase App (the core Firebase SDK) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
@@ -25,9 +25,13 @@
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <a href="login.html" class="btn btn-secondary">Se connecter</a>
-                <a href="signup.html" class="btn btn-primary">S'inscrire</a>
-                <a href="admin.html" class="btn btn-admin">Admin</a>
+                <a href="login.html" class="btn btn-secondary" id="loginBtn">Se connecter</a>
+                <a href="signup.html" class="btn btn-primary" id="signupBtn">S'inscrire</a>
+                <a href="admin.html" class="btn btn-admin" id="adminBtn" style="display: none;">Admin</a>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <span id="userName">Utilisateur</span>
+                    <button class="btn btn-secondary" id="logoutBtn">Déconnexion</button>
+                </div>
             </div>
         </div>
     </header>
@@ -134,8 +138,96 @@
         </div>
     </footer>
 
+    <script src="js/firebase.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
+            authDomain: "pariszik-6ced1.firebaseapp.com",
+            projectId: "pariszik-6ced1",
+            storageBucket: "pariszik-6ced1.firebasestorage.app",
+            messagingSenderId: "1065971112198",
+            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
+        };
+        
+        // Initialiser Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Éléments du DOM
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const adminBtn = document.getElementById('adminBtn');
+        const userMenu = document.getElementById('userMenu');
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Vérifier l'état d'authentification
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Utilisateur connecté
+                loginBtn.style.display = 'none';
+                signupBtn.style.display = 'none';
+                
+                // Récupérer le nom de l'utilisateur depuis Firestore
+                const db = firebase.firestore();
+                db.collection("users").doc(user.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            userName.textContent = userData.fullName || user.email.split('@')[0];
+                            localStorage.setItem('userRole', userData.role || 'user');
+                            
+                            // Afficher le bouton admin si l'utilisateur est admin
+                            if (userData.role === 'admin') {
+                                adminBtn.style.display = 'inline-block';
+                            }
+                        } else {
+                            userName.textContent = user.email.split('@')[0];
+                            localStorage.setItem('userRole', 'user');
+                        }
+                        
+                        userMenu.style.display = 'flex';
+                        userMenu.style.alignItems = 'center';
+                        userMenu.style.gap = '10px';
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la récupération des données utilisateur:', error);
+                        userName.textContent = user.email.split('@')[0];
+                        userMenu.style.display = 'flex';
+                        userMenu.style.alignItems = 'center';
+                        userMenu.style.gap = '10px';
+                    });
+            } else {
+                // Utilisateur non connecté
+                loginBtn.style.display = 'inline-block';
+                signupBtn.style.display = 'inline-block';
+                adminBtn.style.display = 'none';
+                userMenu.style.display = 'none';
+            }
+        });
+        
+        // Gestion de la déconnexion
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                firebase.auth().signOut()
+                    .then(() => {
+                        console.log('Déconnexion réussie');
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userPhoto');
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error('Erreur lors de la déconnexion:', error);
+                        alert('Erreur lors de la déconnexion: ' + error.message);
+                    });
+            });
+        }
+        
         // Contenu populaire
         const popularContent = document.getElementById('popularContent');
         const popularItems = [
@@ -201,16 +293,27 @@
         });
 
         // Gestion de la lecture
-        document.querySelectorAll('.play-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const title = this.getAttribute('data-title');
-                const artist = this.getAttribute('data-artist');
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('play-btn')) {
+                const title = e.target.getAttribute('data-title');
+                const artist = e.target.getAttribute('data-artist');
                 
                 document.querySelector('.player-title').textContent = title;
                 document.querySelector('.player-artist').textContent = artist;
                 
+                // Vérifier si l'utilisateur est connecté
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    console.log(`Lecture de "${title}" par ${artist} par l'utilisateur ${user.email}`);
+                } else {
+                    if (confirm('Vous devez être connecté pour écouter ce contenu. Voulez-vous vous connecter ?')) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                }
+                
                 alert(`Lecture de "${title}" par ${artist}`);
-            });
+            }
         });
 
         // Barre de recherche
