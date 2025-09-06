@@ -1912,3 +1912,262 @@ body.no-scroll {
     background: rgba(255,204,0,0.2);
     transform: translateY(-2px);
 }
+/* Ajoutez ces styles à votre fichier css/style.css */
+
+/* Default Cover */
+.default-cover {
+    background: linear-gradient(45deg, #0066ff, #00aaff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Music Player Card */
+.music-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.music-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    border-color: var(--primary);
+}
+
+.music-card-cover {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 3px solid var(--primary);
+}
+
+.music-card-content {
+    padding: 1.5rem;
+}
+
+.music-card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.music-card-artist {
+    color: #666;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.music-card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.play-btn {
+    background: var(--primary);
+    color: var(--light);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 1.2rem;
+}
+
+.play-btn:hover {
+    background: var(--accent);
+    transform: scale(1.1);
+}
+
+.favorite-btn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn:hover {
+    color: #dc3545;
+    transform: scale(1.1);
+}
+
+.favorite-btn.active {
+    color: #dc3545;
+}
+
+/* Player Styles */
+.player {
+    background: var(--secondary);
+    color: var(--light);
+    padding: 1.5rem 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 99;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+}
+
+.player .container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.player-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.player-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.player-info {
+    flex: 1;
+}
+
+.player-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.player-artist {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.control-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 0.9rem;
+}
+
+.control-btn:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+}
+
+.progress {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--highlight);
+    border-radius: 5px;
+    width: 30%;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    grid-column: 1 / -1;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-content, .error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray);
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.error {
+    color: var(--danger);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .player .container {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0 1rem;
+    }
+    
+    .player-container {
+        width: 100%;
+    }
+    
+    .player-info {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .player-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .progress {
+        width: 100%;
+    }
+    
+    .music-card-cover {
+        height: 150px;
+    }
+}

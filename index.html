@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Découvrez la musique du monde entier</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (uniquement pour l'authentification de base) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
-    <script src="js/firebase.js"></script>
-    <script src="js/content.js"></script>
+    <script src="js/admin-auth.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <!-- Favicon et icônes -->
+    <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/images/icon-192.webp">
+    <link rel="apple-touch-icon" sizes="512x512" href="assets/images/icon-512.webp">
 </head>
 <body>
     <header>
@@ -53,6 +54,7 @@
     <!-- Sidebar pour desktop -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
+            <img src="assets/images/logo-pariszik.webp" alt="ParisZik Logo" class="sidebar-logo">
             <h3>ParisZik</h3>
         </div>
         <nav class="sidebar-nav">
@@ -110,7 +112,6 @@
                     <a href="library.html" class="view-more-btn">Voir plus →</a>
                 </div>
                 <div class="content-grid" id="recentContent">
-                    <!-- Les 3 derniers clips seront affichés ici -->
                     <div class="loading-spinner">
                         <div class="spinner"></div>
                         <p>Chargement des derniers clips...</p>
@@ -146,7 +147,7 @@
         <div class="player">
             <div class="container">
                 <div class="player-container">
-                    <img src="assets/images/placeholder.jpg" alt="Now Playing" class="player-img">
+                    <img src="assets/images/default-cover.webp" alt="Now Playing" class="player-img">
                     <div class="player-info">
                         <h4 class="player-title">Aucun titre en lecture</h4>
                         <p class="player-artist">-</p>
@@ -168,6 +169,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-section">
+                    <img src="assets/images/logo-pariszik.webp" alt="ParisZik Logo" class="footer-logo">
                     <h3>ParisZik</h3>
                     <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct.</p>
                     <div class="admin-access">
@@ -210,7 +212,7 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('Page d\'accueil chargée');
             
             // Éléments du DOM
@@ -226,91 +228,31 @@
             const sidebarUserName = document.getElementById('sidebarUserName');
             const sidebarUserRole = document.getElementById('sidebarUserRole');
             const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
-            const authButtons = document.getElementById('authButtons');
+            const recentContent = document.getElementById('recentContent');
+            const popularContent = document.getElementById('popularContent');
+            const liveContent = document.getElementById('liveContent');
             
-            // Attendre l'initialisation de ParisZik
-            try {
-                await window.ParisZikInit.initializeFirebase();
-                console.log('ParisZik initialisé:', window.ParisZikInit.getStatus());
-            } catch (error) {
-                console.error('Erreur lors de l\'initialisation de ParisZik:', error);
-            }
-            
-            // Vérifier l'état d'authentification
-            if (window.ParisZikAuth) {
-                window.ParisZikAuth.checkAuthState(function(user) {
-                    updateUIBasedOnAuth(user);
-                });
-            } else {
-                console.error('ParisZikAuth non disponible');
-                showAuthButtons();
-            }
-            
-            // Fonction pour mettre à jour l'interface selon l'état d'authentification
-            function updateUIBasedOnAuth(user) {
-                if (user) {
-                    console.log('Utilisateur connecté:', user.email);
-                    
-                    // Récupérer les informations depuis localStorage
-                    const storedName = localStorage.getItem('userName');
-                    const storedRole = localStorage.getItem('userRole');
-                    
-                    // Si les informations ne sont pas dans localStorage, les récupérer depuis l'utilisateur
-                    const displayName = storedName || user.displayName || user.email.split('@')[0];
-                    const userRole = storedRole || (window.ParisZikInit?.isAdminUser(user) ? 'admin' : 'user');
-                    
-                    // Mettre à jour l'interface
-                    userName.textContent = displayName;
-                    sidebarUserName.textContent = displayName;
-                    sidebarUserRole.textContent = userRole === 'admin' ? 'Administrateur' : 'Membre';
-                    sidebarUserAvatar.textContent = displayName.substring(0, 1).toUpperCase();
-                    
-                    // Afficher le menu utilisateur
-                    loginBtn.style.display = 'none';
-                    signupBtn.style.display = 'none';
-                    userMenu.style.display = 'flex';
-                    userMenu.style.alignItems = 'center';
-                    userMenu.style.gap = '10px';
-                    
-                    // Afficher le bouton admin si l'utilisateur est admin
-                    if (userRole === 'admin') {
-                        adminBtn.style.display = 'inline-block';
-                    } else {
-                        adminBtn.style.display = 'none';
-                    }
-                    
-                    console.log('Interface utilisateur mise à jour pour:', displayName);
-                } else {
-                    console.log('Aucun utilisateur connecté');
-                    showAuthButtons();
-                }
-            }
-            
-            // Fonction pour afficher les boutons de connexion/inscription
-            function showAuthButtons() {
-                loginBtn.style.display = 'inline-block';
-                signupBtn.style.display = 'inline-block';
-                adminBtn.style.display = 'none';
-                userMenu.style.display = 'none';
-                sidebarUserName.textContent = 'Invité';
-                sidebarUserRole.textContent = 'Visiteur';
-                sidebarUserAvatar.textContent = '👤';
+            // Vérifier l'authentification admin
+            if (window.SimpleAdminAuth && window.SimpleAdminAuth.isAuthenticatedAsAdmin()) {
+                loginBtn.style.display = 'none';
+                signupBtn.style.display = 'none';
+                adminBtn.style.display = 'inline-block';
+                userMenu.style.display = 'flex';
+                userMenu.style.alignItems = 'center';
+                userMenu.style.gap = '10px';
+                userName.textContent = window.SimpleAdminAuth.getAdminEmail();
+                sidebarUserName.textContent = window.SimpleAdminAuth.getAdminEmail();
+                sidebarUserRole.textContent = 'Administrateur';
+                sidebarUserAvatar.textContent = window.SimpleAdminAuth.getAdminEmail().substring(0, 1).toUpperCase();
             }
             
             // Gestion de la déconnexion
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', async function() {
-                    try {
-                        if (window.ParisZikAuth) {
-                            await window.ParisZikAuth.signOut();
-                            console.log('Déconnexion réussie');
-                        }
-                        // Recharger la page pour mettre à jour l'interface
-                        window.location.reload();
-                    } catch (error) {
-                        console.error('Erreur lors de la déconnexion:', error);
-                        alert('Erreur lors de la déconnexion: ' + error.message);
+                logoutBtn.addEventListener('click', function() {
+                    if (window.SimpleAdminAuth) {
+                        window.SimpleAdminAuth.logout();
                     }
+                    location.reload();
                 });
             }
             
@@ -331,19 +273,251 @@
                 });
             }
             
-            // Chargement du contenu (simulé pour cet exemple)
+            // Charger les contenus
             loadContent();
         });
         
-        // Fonction pour charger le contenu (à adapter selon vos besoins)
+        // Fonction pour charger le contenu
         function loadContent() {
-            // Simuler le chargement du contenu
-            setTimeout(function() {
-                document.querySelectorAll('.loading-spinner').forEach(spinner => {
-                    spinner.innerHTML = '<p class="no-content">Contenu chargé !</p>';
-                });
-            }, 1500);
+            try {
+                // Charger les contenus depuis localStorage
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                
+                // Trier par date (les plus récents en premier)
+                contents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+                
+                // Afficher les 3 derniers clips
+                const recentContent = document.getElementById('recentContent');
+                recentContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    recentContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
+                } else {
+                    // Prendre les 3 derniers clips
+                    const recentClips = contents.slice(0, 3);
+                    recentClips.forEach(content => {
+                        addContentCard(content, recentContent);
+                    });
+                }
+                
+                // Afficher les contenus populaires (par nombre de vues)
+                const popularContent = document.getElementById('popularContent');
+                popularContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    popularContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
+                } else {
+                    // Trier par nombre de vues
+                    const popularClips = [...contents].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
+                    popularClips.forEach(content => {
+                        addContentCard(content, popularContent);
+                    });
+                }
+                
+                // Afficher les contenus en direct
+                const liveContent = document.getElementById('liveContent');
+                liveContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
+                } else {
+                    // Filtrer les contenus en direct
+                    const liveClips = contents.filter(content => content.isLive).slice(0, 3);
+                    if (liveClips.length === 0) {
+                        liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
+                    } else {
+                        liveClips.forEach(content => {
+                            addContentCard(content, liveContent);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des contenus:', error);
+                document.getElementById('recentContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+                document.getElementById('popularContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+                document.getElementById('liveContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+            }
+        }
+        
+        // Fonction pour ajouter une carte de contenu
+        function addContentCard(content, container) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = content.id;
+            
+            // Déterminer l'icône selon le type de contenu
+            let icon = '🎵';
+            if (content.contentType === 'video') icon = '🎬';
+            if (content.contentType === 'live') icon = '🔴';
+            
+            // URL de la miniature (utiliser default-cover.webp si aucune miniature n'est fournie)
+            const thumbnailUrl = content.thumbnailUrl || 'assets/images/default-cover.webp';
+            
+            card.innerHTML = `
+                <div class="card-img-container">
+                    <img src="${thumbnailUrl}" alt="${content.title}" class="card-img">
+                    ${content.isLive ? '<div class="live-overlay"><div class="live-badge">LIVE</div></div>' : ''}
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${icon} ${content.title}</h3>
+                    <p class="card-artist">👤 ${content.artist}</p>
+                    <div class="card-actions">
+                        <button class="play-btn" data-id="${content.id}" data-title="${content.title}" data-artist="${content.artist}" title="Lire ce contenu">▶</button>
+                        <button class="favorite-btn" data-id="${content.id}" title="Ajouter aux favoris">❤️</button>
+                        ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+            
+            // Ajouter les gestionnaires d'événements
+            card.querySelector('.play-btn').addEventListener('click', function() {
+                playContent(content);
+            });
+            
+            card.querySelector('.favorite-btn').addEventListener('click', function() {
+                toggleFavorite(content.id, this);
+            });
+        }
+        
+        // Fonction pour jouer un contenu
+        function playContent(content) {
+            // Mettre à jour le player
+            const playerTitle = document.querySelector('.player-title');
+            const playerArtist = document.querySelector('.player-artist');
+            const playerImg = document.querySelector('.player-img');
+            
+            if (playerTitle && playerArtist && playerImg) {
+                playerTitle.textContent = content.title;
+                playerArtist.textContent = content.artist;
+                playerImg.src = content.thumbnailUrl || 'assets/images/default-cover.webp';
+            }
+            
+            // Simuler la lecture
+            alert(`Lecture de "${content.title}" par ${content.artist}`);
+            
+            // Incrémenter le nombre de vues
+            incrementViews(content.id);
+        }
+        
+        // Fonction pour incrémenter le nombre de vues
+        function incrementViews(contentId) {
+            try {
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                const contentIndex = contents.findIndex(c => c.id === contentId);
+                
+                if (contentIndex !== -1) {
+                    contents[contentIndex].views = (contents[contentIndex].views || 0) + 1;
+                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'incrémentation des vues:', error);
+            }
+        }
+        
+        // Fonction pour ajouter/supprimer des favoris
+        function toggleFavorite(contentId, button) {
+            try {
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                const contentIndex = contents.findIndex(c => c.id === contentId);
+                
+                if (contentIndex !== -1) {
+                    contents[contentIndex].isFavorite = !contents[contentIndex].isFavorite;
+                    
+                    if (contents[contentIndex].isFavorite) {
+                        button.textContent = '❤️';
+                        button.style.color = '#dc3545';
+                        alert('Ajouté aux favoris');
+                    } else {
+                        button.textContent = '❤️';
+                        button.style.color = '';
+                        alert('Retiré des favoris');
+                    }
+                    
+                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                }
+            } catch (error) {
+                console.error('Erreur lors de la gestion des favoris:', error);
+            }
         }
     </script>
+    
+    <style>
+        /* Styles pour la page d'accueil */
+        .sidebar-logo, .footer-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        
+        .card-img-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .card-img-container:hover .card-img {
+            transform: scale(1.05);
+        }
+        
+        .live-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(220, 53, 69, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .live-badge-small {
+            background: var(--danger);
+            color: var(--light);
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .favorite-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar-logo, .footer-logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
 </body>
 </html>

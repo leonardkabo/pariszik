@@ -11,8 +11,12 @@
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/mega.js"></script>
+    <script src="js/mega-upload.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <!-- Favicon et icônes -->
+    <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/images/icon-192.webp">
+    <link rel="apple-touch-icon" sizes="512x512" href="assets/images/icon-512.webp">
 </head>
 <body>
     <header>
@@ -80,11 +84,12 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="thumbnail">Miniature (optionnel)</label>
+                            <label for="thumbnail">Miniature/Cover (optionnel)</label>
                             <input type="file" id="thumbnail" accept="image/*">
                             <div id="thumbnailPreview" class="thumbnail-preview" style="display: none;">
                                 <img id="thumbnailImg" src="#" alt="Aperçu de la miniature">
                             </div>
+                            <p class="help-text">Si aucune image n'est sélectionnée, la cover par défaut sera utilisée.</p>
                         </div>
                         
                         <div class="form-group">
@@ -120,9 +125,9 @@
                         <input type="text" id="searchContent" class="search-input" placeholder="Rechercher...">
                     </div>
                     <div class="admin-content-grid" id="existingContent">
-                        <div class="demo-content">
-                            <p>🛠️ Contenu de démonstration - Le système fonctionne !</p>
-                            <p>Vous pouvez maintenant uploader des fichiers vers MEGA et les gérer depuis ce panel.</p>
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Chargement des contenus...</p>
                         </div>
                     </div>
                 </div>
@@ -163,93 +168,129 @@
                 }
             });
             
+            // Charger les contenus existants
+            loadExistingContent();
+            
             // Gestion du formulaire d'upload
-            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            document.getElementById('uploadForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const contentType = document.getElementById('contentType').value;
                 const title = document.getElementById('title').value;
                 const artist = document.getElementById('artist').value;
-                const file = document.getElementById('fileUpload').files[0];
+                const description = document.getElementById('description').value;
+                const category = document.getElementById('category').value;
+                const thumbnailFile = document.getElementById('thumbnail').files[0];
+                const mediaFile = document.getElementById('fileUpload').files[0];
                 
                 if (!contentType || !title || !artist) {
                     alert('Veuillez remplir tous les champs obligatoires');
                     return;
                 }
                 
-                if (!file) {
+                if (!mediaFile) {
                     alert('Veuillez sélectionner un fichier à uploader');
                     return;
                 }
                 
-                // Simuler l'upload vers MEGA
+                // Afficher l'indicateur de progression
                 const uploadBtn = document.getElementById('uploadBtn');
                 const originalText = uploadBtn.textContent;
                 uploadBtn.textContent = 'Upload en cours...';
                 uploadBtn.disabled = true;
+                document.getElementById('uploadProgress').style.display = 'block';
                 
-                // Simuler une progression
-                const progressBar = document.getElementById('progressBar');
-                const progressText = document.getElementById('progressText');
-                const uploadProgress = document.getElementById('uploadProgress');
-                const uploadStatus = document.getElementById('uploadStatus');
-                
-                uploadProgress.style.display = 'block';
-                
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 10;
-                    if (progress > 100) progress = 100;
+                try {
+                    // Upload du fichier média vers MEGA
+                    console.log('Début de l\'upload vers MEGA...');
+                    showUploadStatus('Upload du fichier média vers MEGA en cours...', 'info');
                     
-                    progressBar.style.width = `${progress}%`;
-                    progressText.textContent = `${Math.round(progress)}%`;
+                    const mediaResult = await window.MegaUploader.uploadFile(mediaFile);
                     
-                    if (progress === 100) {
-                        clearInterval(interval);
-                        
-                        // Simuler le succès de l'upload
-                        uploadStatus.textContent = `✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`;
-                        uploadStatus.className = 'upload-status success';
-                        
-                        // Ajouter le contenu à la liste
-                        const existingContent = document.getElementById('existingContent');
-                        const card = document.createElement('div');
-                        card.className = 'admin-card';
-                        card.innerHTML = `
-                            <div class="admin-card-header">
-                                <span>🎵 ${title}</span>
-                                <span class="content-type-badge">${contentType}</span>
-                            </div>
-                            <div class="card-content">
-                                <p class="card-artist">👤 ${artist}</p>
-                                <p>📁 ${file.name} (${Math.round(file.size/1024)} KB)</p>
-                                <p>📅 Date: ${new Date().toLocaleDateString('fr-FR')}</p>
-                            </div>
-                            <div class="admin-card-actions">
-                                <button class="btn btn-view">👁️ Voir</button>
-                                <button class="btn btn-edit">✏️ Modifier</button>
-                                <button class="btn btn-delete">🗑️ Supprimer</button>
-                            </div>
-                        `;
-                        existingContent.appendChild(card);
-                        
-                        // Réinitialiser le formulaire
-                        document.getElementById('uploadForm').reset();
-                        document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
-                        
-                        uploadBtn.textContent = originalText;
-                        uploadBtn.disabled = false;
-                        uploadProgress.style.display = 'none';
+                    if (!mediaResult.success) {
+                        throw new Error('Erreur lors de l\'upload du fichier média: ' + mediaResult.message);
                     }
-                }, 300);
+                    
+                    console.log('Fichier média uploadé avec succès:', mediaResult);
+                    showUploadStatus('Fichier média uploadé avec succès', 'success');
+                    
+                    // Upload de la miniature vers MEGA (si fournie)
+                    let thumbnailUrl = 'assets/images/default-cover.webp'; // Cover par défaut
+                    if (thumbnailFile) {
+                        showUploadStatus('Upload de la miniature vers MEGA en cours...', 'info');
+                        const thumbnailResult = await window.MegaUploader.uploadFile(thumbnailFile);
+                        
+                        if (thumbnailResult.success) {
+                            thumbnailUrl = thumbnailResult.fileUrl;
+                            console.log('Miniature uploadée avec succès:', thumbnailResult);
+                            showUploadStatus('Miniature uploadée avec succès', 'success');
+                        } else {
+                            console.warn('Erreur lors de l\'upload de la miniature, utilisation de la cover par défaut');
+                            showUploadStatus('Erreur lors de l\'upload de la miniature, utilisation de la cover par défaut', 'warning');
+                        }
+                    }
+                    
+                    // Créer l'objet contenu
+                    const contentData = {
+                        id: 'content_' + Date.now(),
+                        title: title,
+                        artist: artist,
+                        description: description,
+                        category: category,
+                        contentType: contentType,
+                        fileUrl: mediaResult.fileUrl,
+                        fileName: mediaFile.name,
+                        fileSize: mediaFile.size,
+                        thumbnailUrl: thumbnailUrl,
+                        uploadedAt: new Date().toISOString(),
+                        uploadedBy: window.SimpleAdminAuth.getAdminEmail(),
+                        views: 0,
+                        likes: 0,
+                        isLive: contentType === 'live',
+                        isFavorite: false
+                    };
+                    
+                    // Sauvegarder le contenu dans localStorage (pour le développement)
+                    saveContentToLocal(contentData);
+                    
+                    // Ajouter le contenu à l'interface
+                    addContentToGrid(contentData);
+                    
+                    // Réinitialiser le formulaire
+                    document.getElementById('uploadForm').reset();
+                    document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                    document.getElementById('thumbnailPreview').style.display = 'none';
+                    document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
+                    
+                    // Réinitialiser les boutons
+                    uploadBtn.textContent = originalText;
+                    uploadBtn.disabled = false;
+                    document.getElementById('uploadProgress').style.display = 'none';
+                    document.getElementById('progressBar').style.width = '0%';
+                    document.getElementById('progressText').textContent = '0%';
+                    
+                    showUploadStatus(`✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`, 'success');
+                    
+                    // Notification de succès
+                    alert('Contenu publié avec succès !');
+                    
+                } catch (error) {
+                    console.error('Erreur lors de l\'upload:', error);
+                    showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
+                    
+                    // Réinitialiser les boutons
+                    uploadBtn.textContent = originalText;
+                    uploadBtn.disabled = false;
+                    document.getElementById('uploadProgress').style.display = 'none';
+                }
             });
             
-            // Gestion du changement de fichier
+            // Gestion du changement de fichier média
             document.getElementById('fileUpload').addEventListener('change', function() {
                 if (this.files.length > 0) {
                     const file = this.files[0];
                     document.querySelector('.file-upload-label span').textContent = file.name;
-                    document.getElementById('fileInfo').textContent = `${file.name} (${Math.round(file.size/1024)} KB)`;
+                    document.getElementById('fileInfo').textContent = `${file.name} (${formatFileSize(file.size)})`;
                 } else {
                     document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
                     document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
@@ -272,7 +313,199 @@
                     document.getElementById('thumbnailPreview').style.display = 'none';
                 }
             });
+            
+            // Gestion des filtres
+            document.getElementById('contentFilter').addEventListener('change', filterContent);
+            document.getElementById('searchContent').addEventListener('input', filterContent);
         });
+        
+        // Fonction pour sauvegarder le contenu dans localStorage
+        function saveContentToLocal(contentData) {
+            // Récupérer les contenus existants
+            let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+            
+            // Ajouter le nouveau contenu
+            contents.push(contentData);
+            
+            // Sauvegarder dans localStorage
+            localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+            
+            console.log('Contenu sauvegardé dans localStorage:', contentData);
+        }
+        
+        // Fonction pour charger les contenus existants
+        function loadExistingContent() {
+            try {
+                const existingContent = document.getElementById('existingContent');
+                existingContent.innerHTML = '';
+                
+                // Récupérer les contenus depuis localStorage
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                
+                if (contents.length === 0) {
+                    existingContent.innerHTML = '<p class="no-content">Aucun contenu trouvé. Commencez par en ajouter un !</p>';
+                } else {
+                    // Trier par date (les plus récents en premier)
+                    contents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+                    
+                    contents.forEach(content => {
+                        addContentToGrid(content);
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des contenus:', error);
+                document.getElementById('existingContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+            }
+        }
+        
+        // Fonction pour ajouter un contenu à la grille
+        function addContentToGrid(content) {
+            const existingContent = document.getElementById('existingContent');
+            const card = document.createElement('div');
+            card.className = 'admin-card';
+            card.dataset.id = content.id;
+            card.dataset.contentType = content.contentType;
+            card.dataset.title = content.title;
+            
+            // Formater la date
+            const date = new Date(content.uploadedAt);
+            const formattedDate = date.toLocaleDateString('fr-FR');
+            
+            // Formater la taille du fichier
+            const formattedSize = formatFileSize(content.fileSize);
+            
+            // Déterminer l'icône selon le type de contenu
+            let icon = '🎵';
+            if (content.contentType === 'video') icon = '🎬';
+            if (content.contentType === 'live') icon = '🔴';
+            
+            card.innerHTML = `
+                <div class="admin-card-header">
+                    <span>${icon} ${content.title}</span>
+                    <span class="content-type-badge">${content.contentType}</span>
+                </div>
+                <div class="card-content">
+                    <img src="${content.thumbnailUrl}" alt="${content.title}" class="content-thumbnail">
+                    <p class="card-artist">👤 ${content.artist}</p>
+                    <p>📁 ${content.fileName} (${formattedSize})</p>
+                    <p>📅 Date: ${formattedDate}</p>
+                    <p>📊 Vues: ${content.views || 0} | Likes: ${content.likes || 0}</p>
+                    <p>🏷️ Catégorie: ${content.category}</p>
+                    ${content.description ? `<p class="content-description">📝 ${content.description.substring(0, 100)}${content.description.length > 100 ? '...' : ''}</p>` : ''}
+                </div>
+                <div class="admin-card-actions">
+                    <button class="btn btn-view" data-id="${content.id}" title="Voir le contenu">
+                        👁️ Voir
+                    </button>
+                    <button class="btn btn-edit" data-id="${content.id}" title="Modifier le contenu">
+                        ✏️ Modifier
+                    </button>
+                    <button class="btn btn-delete" data-id="${content.id}" title="Supprimer le contenu">
+                        🗑️ Supprimer
+                    </button>
+                </div>
+            `;
+            existingContent.appendChild(card);
+            
+            // Ajouter les gestionnaires d'événements
+            card.querySelector('.btn-delete').addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce contenu ?')) {
+                    deleteContent(content.id);
+                }
+            });
+        }
+        
+        // Fonction pour supprimer un contenu
+        function deleteContent(contentId) {
+            try {
+                // Récupérer les contenus existants
+                let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                
+                // Filtrer pour supprimer le contenu
+                contents = contents.filter(content => content.id !== contentId);
+                
+                // Sauvegarder dans localStorage
+                localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                
+                // Supprimer la carte de l'interface
+                const card = document.querySelector(`.admin-card[data-id="${contentId}"]`);
+                if (card) {
+                    card.remove();
+                }
+                
+                alert('Contenu supprimé avec succès');
+            } catch (error) {
+                console.error('Erreur lors de la suppression du contenu:', error);
+                alert('Erreur lors de la suppression du contenu');
+            }
+        }
+        
+        // Fonction pour filtrer les contenus
+        function filterContent() {
+            const filterValue = document.getElementById('contentFilter').value;
+            const searchTerm = document.getElementById('searchContent').value.toLowerCase();
+            
+            const cards = document.querySelectorAll('.admin-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const contentType = card.dataset.contentType;
+                const title = card.dataset.title.toLowerCase();
+                
+                const matchesFilter = filterValue === 'all' || contentType === filterValue;
+                const matchesSearch = searchTerm === '' || title.includes(searchTerm);
+                
+                if (matchesFilter && matchesSearch) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            if (visibleCount === 0) {
+                const existingContent = document.getElementById('existingContent');
+                if (!document.querySelector('.no-results')) {
+                    const noResults = document.createElement('p');
+                    noResults.className = 'no-results';
+                    noResults.textContent = 'Aucun contenu ne correspond à votre recherche.';
+                    existingContent.appendChild(noResults);
+                }
+            } else {
+                const noResults = document.querySelector('.no-results');
+                if (noResults) noResults.remove();
+            }
+        }
+        
+        // Fonction pour afficher le statut de l'upload
+        function showUploadStatus(message, type) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.textContent = message;
+            uploadStatus.style.display = 'block';
+            
+            // Supprimer les classes précédentes
+            uploadStatus.classList.remove('success', 'error', 'warning', 'info');
+            
+            // Ajouter la classe correspondante au type
+            if (type === 'success') {
+                uploadStatus.classList.add('success');
+            } else if (type === 'error') {
+                uploadStatus.classList.add('error');
+            } else if (type === 'warning') {
+                uploadStatus.classList.add('warning');
+            } else {
+                uploadStatus.classList.add('info');
+            }
+        }
+        
+        // Fonction utilitaire pour formater la taille des fichiers
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
     </script>
     
     <style>
@@ -343,12 +576,37 @@
             box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
         }
         
-        .demo-content {
+        .loading-spinner {
             text-align: center;
             padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border: 2px dashed #007bff;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-content, .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .content-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin: 0.5rem 0;
         }
         
         .upload-status {
@@ -369,6 +627,32 @@
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        
+        .upload-status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .upload-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .content-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
         
         /* Responsive adjustments */
