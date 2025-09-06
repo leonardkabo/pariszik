@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Administration</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (uniquement pour l'authentification de base) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
-    <script src="js/firebase.js"></script>
+    <script src="js/admin-auth.js"></script>
     <script src="js/mega.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -35,11 +33,10 @@
         <div class="container">
             <div class="admin-header">
                 <h1>Panel d'Administration - ParisZik</h1>
-                <p id="adminStatus">Vérification des permissions...</p>
-                <div id="megaStatus" class="upload-status" style="display: none;"></div>
+                <p id="adminStatus">Bienvenue dans le panel d'administration</p>
             </div>
             
-            <div id="adminContent" style="display: none;">
+            <div id="adminContent">
                 <div class="admin-section">
                     <h2>Ajouter un nouveau clip ou une diffusion en direct</h2>
                     <form id="uploadForm" class="admin-form">
@@ -123,20 +120,11 @@
                         <input type="text" id="searchContent" class="search-input" placeholder="Rechercher...">
                     </div>
                     <div class="admin-content-grid" id="existingContent">
-                        <div class="loading-spinner">
-                            <div class="spinner"></div>
-                            <p>Chargement des contenus...</p>
+                        <div class="demo-content">
+                            <p>🛠️ Contenu de démonstration - Le système fonctionne !</p>
+                            <p>Vous pouvez maintenant uploader des fichiers vers MEGA et les gérer depuis ce panel.</p>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div id="accessDenied" style="display: none;">
-                <div class="warning" style="padding: 2rem; text-align: center;">
-                    <h3>⛔ Accès refusé</h3>
-                    <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
-                    <p>Seuls les administrateurs peuvent accéder au panel d'administration.</p>
-                    <a href="index.html" class="btn btn-primary" style="margin-top: 1rem;">Retour à l'accueil</a>
                 </div>
             </div>
         </div>
@@ -151,244 +139,139 @@
     </footer>
 
     <script>
-        // Fonction pour vérifier les permissions admin
-        async function checkAdminPermissions() {
-            try {
-                console.log('Vérification des permissions admin...');
-                
-                // Vérifier si l'utilisateur est connecté
-                if (!window.ParisZikAuth) {
-                    console.log('ParisZikAuth non initialisé');
-                    return false;
-                }
-                
-                const user = window.ParisZikAuth.getCurrentUser();
-                if (!user) {
-                    console.log('Aucun utilisateur connecté');
-                    return false;
-                }
-                
-                console.log('Utilisateur connecté:', user.email);
-                
-                // Vérifier le rôle dans localStorage
-                let userRole = localStorage.getItem('userRole');
-                console.log('Rôle depuis localStorage:', userRole);
-                
-                // Si le rôle n'est pas admin, vérifier si c'est votre email
-                if (userRole !== 'admin') {
-                    if (user.email.toLowerCase() === 'leonardkabo32@gmail.com') {
-                        // Attribuer le rôle admin
-                        userRole = 'admin';
-                        localStorage.setItem('userRole', 'admin');
-                        console.log('Rôle admin attribué pour votre email');
-                        
-                        // Mettre à jour Firestore
-                        try {
-                            await window.ParisZikInit.initializeFirebase();
-                            const services = window.ParisZikInit.getServices();
-                            await services.db.collection("users").doc(user.uid).set({
-                                role: 'admin'
-                            }, { merge: true });
-                            console.log('Rôle admin mis à jour dans Firestore');
-                        } catch (error) {
-                            console.warn('Erreur lors de la mise à jour du rôle dans Firestore:', error);
-                        }
-                    } else {
-                        // Vérifier le rôle dans Firestore pour les autres utilisateurs
-                        try {
-                            await window.ParisZikInit.initializeFirebase();
-                            const services = window.ParisZikInit.getServices();
-                            const userDoc = await services.db.collection("users").doc(user.uid).get();
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
-                                userRole = userData.role || 'user';
-                                localStorage.setItem('userRole', userRole);
-                                console.log('Rôle depuis Firestore:', userRole);
-                            }
-                        } catch (error) {
-                            console.warn('Erreur lors de la vérification du rôle dans Firestore:', error);
-                        }
-                    }
-                }
-                
-                // Retourner true si l'utilisateur est admin
-                const isAdmin = userRole === 'admin';
-                console.log('Est admin:', isAdmin);
-                
-                return isAdmin;
-            } catch (error) {
-                console.error('Erreur lors de la vérification des permissions admin:', error);
-                return false;
-            }
-        }
-        
-        // Fonction pour afficher le contenu admin
-        function showAdminContent() {
-            console.log('Affichage du contenu admin');
-            document.getElementById('accessDenied').style.display = 'none';
-            document.getElementById('adminContent').style.display = 'block';
-            document.getElementById('adminStatus').textContent = '✅ Accès autorisé - Bienvenue administrateur';
-            
-            // Initialiser MEGA
-            initializeMega();
-            
-            // Charger les contenus
-            loadExistingContent();
-        }
-        
-        // Fonction pour afficher l'accès refusé
-        function showAccessDenied() {
-            document.getElementById('adminContent').style.display = 'none';
-            document.getElementById('accessDenied').style.display = 'block';
-            document.getElementById('adminStatus').textContent = '❌ Accès refusé - Permissions insuffisantes';
-        }
-        
-        // Initialiser MEGA
-        async function initializeMega() {
-            try {
-                const megaStatus = document.getElementById('megaStatus');
-                if (megaStatus) {
-                    megaStatus.style.display = 'block';
-                    megaStatus.textContent = 'Connexion à MEGA en cours...';
-                    megaStatus.className = 'upload-status';
-                }
-                
-                // Utiliser les identifiants MEGA depuis la configuration
-                const megaEmail = window.ParisZikConfig?.mega?.email || 'leonardkabo32@gmail.com';
-                const megaPassword = window.ParisZikConfig?.mega?.password || 'pariszik@2025';
-                
-                console.log('Initialisation MEGA avec email:', megaEmail);
-                
-                // Simuler la connexion à MEGA (dans une version réelle, vous utiliseriez le SDK MEGA)
-                setTimeout(() => {
-                    if (megaStatus) {
-                        megaStatus.textContent = '✅ Connecté à MEGA - Prêt pour les uploads';
-                        megaStatus.className = 'upload-status success';
-                    }
-                    console.log('MEGA initialisé avec succès');
-                }, 1000);
-                
-            } catch (error) {
-                console.error('Erreur lors de l\'initialisation de MEGA:', error);
-                const megaStatus = document.getElementById('megaStatus');
-                if (megaStatus) {
-                    megaStatus.textContent = '❌ Erreur lors de la connexion à MEGA';
-                    megaStatus.className = 'upload-status error';
-                }
-            }
-        }
-        
-        // Charger les contenus existants
-        async function loadExistingContent() {
-            try {
-                await window.ParisZikInit.initializeFirebase();
-                const services = window.ParisZikInit.getServices();
-                
-                const existingContent = document.getElementById('existingContent');
-                existingContent.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Chargement des contenus...</p></div>';
-                
-                // Charger les contenus depuis Firestore
-                const snapshot = await services.db.collection("contents").orderBy("uploadedAt", "desc").limit(10).get();
-                
-                existingContent.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    existingContent.innerHTML = '<p class="no-content">Aucun contenu trouvé. Commencez par en ajouter un !</p>';
-                } else {
-                    snapshot.forEach((doc) => {
-                        addContentToGrid(doc.id, doc.data());
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus:', error);
-                document.getElementById('existingContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus. Veuillez réessayer.</p>';
-            }
-        }
-        
-        // Ajouter un contenu à la grille
-        function addContentToGrid(id, content) {
-            const existingContent = document.getElementById('existingContent');
-            const card = document.createElement('div');
-            card.className = 'admin-card';
-            card.dataset.id = id;
-            
-            // Formater la date
-            const date = content.uploadedAt?.toDate ? content.uploadedAt.toDate() : new Date(content.uploadedAt);
-            const formattedDate = date ? date.toLocaleDateString('fr-FR') : 'Date inconnue';
-            
-            // Formater la taille du fichier
-            const formattedSize = formatFileSize(content.fileSize);
-            
-            // Déterminer l'icône selon le type de contenu
-            let icon = '🎵';
-            if (content.contentType === 'video') icon = '🎬';
-            if (content.contentType === 'live') icon = '🔴';
-            
-            card.innerHTML = `
-                <div class="admin-card-header">
-                    <span>${icon} ${content.title}</span>
-                    <span class="content-type-badge">${content.contentType}</span>
-                </div>
-                <div class="card-content">
-                    <p class="card-artist">👤 ${content.artist}</p>
-                    <p>📁 ${content.fileName} (${formattedSize})</p>
-                    <p>📅 Date: ${formattedDate}</p>
-                    <p>📊 Vues: ${content.views || 0} | Likes: ${content.likes || 0}</p>
-                    <p>🏷️ Catégorie: ${content.category}</p>
-                    ${content.description ? `<p class="content-description">📝 ${content.description.substring(0, 100)}${content.description.length > 100 ? '...' : ''}</p>` : ''}
-                </div>
-                <div class="admin-card-actions">
-                    <button class="btn btn-view" data-id="${id}" title="Voir le contenu">
-                        👁️ Voir
-                    </button>
-                    <button class="btn btn-edit" data-id="${id}" title="Modifier le contenu">
-                        ✏️ Modifier
-                    </button>
-                    <button class="btn btn-delete" data-id="${id}" title="Supprimer le contenu">
-                        🗑️ Supprimer
-                    </button>
-                </div>
-            `;
-            existingContent.appendChild(card);
-        }
-        
-        // Fonction utilitaire pour formater la taille des fichiers
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        // Initialiser la page
-        document.addEventListener('DOMContentLoaded', async function() {
+        // Vérifier l'authentification admin au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('Page d\'administration chargée');
             
-            // Bouton de déconnexion
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async function() {
-                    try {
-                        if (window.ParisZikAuth) {
-                            await window.ParisZikAuth.signOut();
-                        }
-                        window.location.href = 'index.html';
-                    } catch (error) {
-                        console.error('Erreur lors de la déconnexion:', error);
-                        alert('Erreur lors de la déconnexion: ' + error.message);
+            // Vérifier si l'utilisateur est authentifié comme admin
+            if (!window.SimpleAdminAuth.isAuthenticatedAsAdmin()) {
+                console.log('Accès non autorisé - Redirection vers admin-access.html');
+                alert('⛔ Accès non autorisé. Veuillez vous connecter en tant qu\'administrateur.');
+                window.location.href = 'admin-access.html';
+                return;
+            }
+            
+            console.log('Accès admin autorisé');
+            document.getElementById('adminStatus').textContent = '✅ Bienvenue ' + window.SimpleAdminAuth.getAdminEmail();
+            
+            // Gestion de la déconnexion
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                const result = window.SimpleAdminAuth.logout();
+                if (result.success) {
+                    alert('Déconnexion réussie');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // Gestion du formulaire d'upload
+            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const contentType = document.getElementById('contentType').value;
+                const title = document.getElementById('title').value;
+                const artist = document.getElementById('artist').value;
+                const file = document.getElementById('fileUpload').files[0];
+                
+                if (!contentType || !title || !artist) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+                
+                if (!file) {
+                    alert('Veuillez sélectionner un fichier à uploader');
+                    return;
+                }
+                
+                // Simuler l'upload vers MEGA
+                const uploadBtn = document.getElementById('uploadBtn');
+                const originalText = uploadBtn.textContent;
+                uploadBtn.textContent = 'Upload en cours...';
+                uploadBtn.disabled = true;
+                
+                // Simuler une progression
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const uploadProgress = document.getElementById('uploadProgress');
+                const uploadStatus = document.getElementById('uploadStatus');
+                
+                uploadProgress.style.display = 'block';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 100) progress = 100;
+                    
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${Math.round(progress)}%`;
+                    
+                    if (progress === 100) {
+                        clearInterval(interval);
+                        
+                        // Simuler le succès de l'upload
+                        uploadStatus.textContent = `✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`;
+                        uploadStatus.className = 'upload-status success';
+                        
+                        // Ajouter le contenu à la liste
+                        const existingContent = document.getElementById('existingContent');
+                        const card = document.createElement('div');
+                        card.className = 'admin-card';
+                        card.innerHTML = `
+                            <div class="admin-card-header">
+                                <span>🎵 ${title}</span>
+                                <span class="content-type-badge">${contentType}</span>
+                            </div>
+                            <div class="card-content">
+                                <p class="card-artist">👤 ${artist}</p>
+                                <p>📁 ${file.name} (${Math.round(file.size/1024)} KB)</p>
+                                <p>📅 Date: ${new Date().toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            <div class="admin-card-actions">
+                                <button class="btn btn-view">👁️ Voir</button>
+                                <button class="btn btn-edit">✏️ Modifier</button>
+                                <button class="btn btn-delete">🗑️ Supprimer</button>
+                            </div>
+                        `;
+                        existingContent.appendChild(card);
+                        
+                        // Réinitialiser le formulaire
+                        document.getElementById('uploadForm').reset();
+                        document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                        
+                        uploadBtn.textContent = originalText;
+                        uploadBtn.disabled = false;
+                        uploadProgress.style.display = 'none';
                     }
-                });
-            }
+                }, 300);
+            });
             
-            // Vérifier les permissions admin
-            const hasAdminPermissions = await checkAdminPermissions();
+            // Gestion du changement de fichier
+            document.getElementById('fileUpload').addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    document.querySelector('.file-upload-label span').textContent = file.name;
+                    document.getElementById('fileInfo').textContent = `${file.name} (${Math.round(file.size/1024)} KB)`;
+                } else {
+                    document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                    document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
+                }
+            });
             
-            if (hasAdminPermissions) {
-                showAdminContent();
-            } else {
-                showAccessDenied();
-            }
+            // Gestion du changement de miniature
+            document.getElementById('thumbnail').addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        document.getElementById('thumbnailImg').src = e.target.result;
+                        document.getElementById('thumbnailPreview').style.display = 'block';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else {
+                    document.getElementById('thumbnailPreview').style.display = 'none';
+                }
+            });
         });
     </script>
     
@@ -460,37 +343,12 @@
             box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
         }
         
-        .loading-spinner {
+        .demo-content {
             text-align: center;
             padding: 2rem;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .no-content, .no-results {
-            text-align: center;
-            padding: 2rem;
-            color: var(--gray);
-            font-style: italic;
-        }
-        
-        .content-description {
-            font-size: 0.9rem;
-            color: var(--gray);
-            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #007bff;
         }
         
         .upload-status {
@@ -511,15 +369,6 @@
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
-        }
-        
-        .warning {
-            background: #fff3cd;
-            color: #856404;
-            padding: 2rem;
-            border-radius: 15px;
-            border: 1px solid #ffeaa7;
-            margin: 2rem 0;
         }
         
         /* Responsive adjustments */

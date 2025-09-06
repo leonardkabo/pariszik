@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Accès Administrateur</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (uniquement pour l'authentification de base) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
-    <script src="js/firebase.js"></script>
+    <script src="js/admin-auth.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,20 +19,19 @@
             <div class="auth-header">
                 <div class="logo">Paris<span>Zik</span></div>
                 <h2>Accès Administrateur</h2>
-                <p>Veuillez entrer vos identifiants pour accéder au panel d'administration</p>
-                <p class="note">Utilisez votre email et mot de passe pour accéder au panel d'administration.</p>
-                <div class="connection-status" id="connectionStatus">État de la connexion: Initialisation...</div>
+                <p>Entrez vos identifiants administrateur pour accéder au panel de gestion</p>
+                <div class="connection-status" id="connectionStatus">Prêt à s'authentifier</div>
             </div>
             
             <form id="adminAccessForm" class="auth-form">
                 <div class="form-group">
-                    <label for="adminEmail">Email</label>
-                    <input type="email" id="adminEmail" placeholder="leonardkabo32@gmail.com" required>
+                    <label for="adminEmail">Email Administrateur</label>
+                    <input type="email" id="adminEmail" placeholder="leonardkabo32@gmail.com" required value="leonardkabo32@gmail.com">
                 </div>
                 
                 <div class="form-group">
-                    <label for="adminPassword">Mot de passe</label>
-                    <input type="password" id="adminPassword" placeholder="Votre mot de passe" required>
+                    <label for="adminPassword">Mot de passe Administrateur</label>
+                    <input type="password" id="adminPassword" placeholder="••••••••" required>
                 </div>
                 
                 <div class="form-options">
@@ -42,12 +40,15 @@
                     </label>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-block">Accéder au panel d'administration</button>
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Accéder au panel d'administration</button>
             </form>
             
             <div class="auth-footer">
                 <p><a href="index.html">← Retour à l'accueil</a></p>
-                <p class="help-text">Problème de connexion ? Vérifiez que votre email est correctement orthographié.</p>
+                <p class="help-text" style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                    Email par défaut: leonardkabo32@gmail.com<br>
+                    Mot de passe par défaut: pariszik@2025
+                </p>
             </div>
         </div>
     </div>
@@ -61,75 +62,23 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Page d\'accès admin chargée');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page d\'accès admin simplifiée chargée');
             
-            const connectionStatus = document.getElementById('connectionStatus');
             const adminAccessForm = document.getElementById('adminAccessForm');
-            const submitBtn = adminAccessForm.querySelector('button[type="submit"]');
-            const adminEmailInput = document.getElementById('adminEmail');
-            
-            // Mettre à jour le statut de connexion
-            function updateConnectionStatus(status, message) {
-                if (connectionStatus) {
-                    connectionStatus.textContent = message;
-                    connectionStatus.className = 'connection-status ' + status;
-                }
-            }
-            
-            try {
-                // Attendre l'initialisation de ParisZik
-                await window.ParisZikInit.initializeFirebase();
-                
-                // Mettre à jour le statut
-                const status = window.ParisZikInit.getStatus();
-                if (status.isOnline) {
-                    updateConnectionStatus('online', '✅ Connecté - Prêt à s\'authentifier');
-                } else {
-                    updateConnectionStatus('offline', '⚠️ Mode offline - Authentification limitée');
-                }
-                
-                console.log('Initialisation terminée:', status);
-                
-            } catch (error) {
-                console.error('Erreur lors de l\'initialisation:', error);
-                updateConnectionStatus('error', '❌ Erreur d\'initialisation - Veuillez rafraîchir la page');
-            }
-            
-            // Correction automatique de l'email
-            adminEmailInput.addEventListener('blur', function() {
-                const email = this.value.toLowerCase().trim();
-                // Correction de l'orthographe courante
-                if (email.includes('kaabo') && email.includes('@gmail.com')) {
-                    this.value = 'leonardkabo32@gmail.com';
-                    alert('Correction automatique de l\'email: leonardkabo32@gmail.com');
-                }
-            });
+            const submitBtn = document.getElementById('submitBtn');
+            const connectionStatus = document.getElementById('connectionStatus');
             
             // Gestion du formulaire d'accès admin
-            adminAccessForm.addEventListener('submit', async function(e) {
+            adminAccessForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                let email = document.getElementById('adminEmail').value;
+                const email = document.getElementById('adminEmail').value.trim();
                 const password = document.getElementById('adminPassword').value;
-                
-                // Correction automatique de l'email
-                email = email.toLowerCase().trim();
-                if (email.includes('kaabo') && email.includes('@gmail.com')) {
-                    email = 'leonardkabo32@gmail.com';
-                    document.getElementById('adminEmail').value = email;
-                }
                 
                 // Validation basique
                 if (!email || !password) {
                     alert('Veuillez remplir tous les champs');
-                    return;
-                }
-                
-                // Validation de l'email
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    alert('Veuillez entrer une adresse email valide');
                     return;
                 }
                 
@@ -141,110 +90,33 @@
                 try {
                     console.log('Tentative d\'accès admin pour:', email);
                     
-                    // Initialiser l'authentification si ce n'est pas déjà fait
-                    if (!window.ParisZikAuth.initialized) {
-                        await window.ParisZikAuth.initialize();
-                    }
-                    
-                    // Se connecter
-                    const result = await window.ParisZikAuth.signIn(email, password);
+                    // Utiliser le système d'authentification admin simplifié
+                    const result = window.SimpleAdminAuth.login(email, password);
                     
                     if (result.success) {
-                        console.log('Connexion réussie:', result.user.email);
+                        console.log('Accès admin autorisé');
                         
-                        // Forcer le rôle admin pour votre email spécifique
-                        if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
-                            try {
-                                // Mettre à jour le rôle dans Firestore
-                                const services = window.ParisZikInit.getServices();
-                                if (services.db) {
-                                    await services.db.collection("users").doc(result.user.uid).set({
-                                        role: 'admin',
-                                        email: email,
-                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                                    }, { merge: true });
-                                    
-                                    // Mettre à jour le localStorage
-                                    localStorage.setItem('userRole', 'admin');
-                                    localStorage.setItem('userId', result.user.uid);
-                                    localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
-                                    
-                                    console.log('Rôle admin attribué avec succès');
-                                    
-                                    // Rediriger vers le panel d'administration
-                                    alert('Accès administrateur autorisé !');
-                                    window.location.href = 'admin.html';
-                                } else {
-                                    throw new Error('Firestore non disponible');
-                                }
-                            } catch (error) {
-                                console.error('Erreur lors de la mise à jour du rôle admin:', error);
-                                alert('Erreur lors de la mise à jour du rôle admin: ' + error.message);
-                            }
-                        } else {
-                            // Pour les autres utilisateurs, vérifier s'ils ont le rôle admin
-                            let userRole = 'user';
-                            try {
-                                const services = window.ParisZikInit.getServices();
-                                if (services.db) {
-                                    const userDoc = await services.db.collection("users").doc(result.user.uid).get();
-                                    if (userDoc.exists) {
-                                        const userData = userDoc.data();
-                                        userRole = userData.role || 'user';
-                                    }
-                                }
-                            } catch (error) {
-                                console.warn('Erreur lors de la vérification du rôle:', error);
-                            }
-                            
-                            if (userRole === 'admin') {
-                                // Mettre à jour le localStorage
-                                localStorage.setItem('userRole', 'admin');
-                                localStorage.setItem('userId', result.user.uid);
-                                localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
-                                
-                                // Rediriger vers le panel d'administration
-                                alert('Accès administrateur autorisé !');
-                                window.location.href = 'admin.html';
-                            } else {
-                                // L'utilisateur n'est pas admin
-                                await window.ParisZikAuth.signOut();
-                                submitBtn.textContent = originalText;
-                                submitBtn.disabled = false;
-                                alert('Accès refusé : vous n\'avez pas les permissions administrateur.');
-                            }
-                        }
+                        // Rediriger vers le panel d'administration
+                        alert('✅ Accès administrateur autorisé !');
+                        window.location.href = 'admin.html';
+                    } else {
+                        console.log('Accès admin refusé');
+                        alert('❌ ' + result.message);
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
                     }
                 } catch (error) {
-                    console.error('Erreur de connexion:', error);
+                    console.error('Erreur lors de la tentative d\'accès admin:', error);
+                    alert('❌ Erreur lors de la tentative d\'accès: ' + error.message);
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
-                    
-                    let errorMessage = 'Erreur de connexion: ';
-                    if (error.code) {
-                        switch (error.code) {
-                            case 'auth/invalid-email':
-                                errorMessage += 'Email invalide.';
-                                break;
-                            case 'auth/user-disabled':
-                                errorMessage += 'Compte désactivé.';
-                                break;
-                            case 'auth/user-not-found':
-                                errorMessage += 'Aucun compte associé à cet email. Vérifiez l\'orthographe de votre email.';
-                                break;
-                            case 'auth/wrong-password':
-                                errorMessage += 'Mot de passe incorrect.';
-                                break;
-                            default:
-                                errorMessage += error.message;
-                        }
-                    } else {
-                        errorMessage += error.message || 'Erreur inconnue';
-                    }
-                    
-                    alert(errorMessage);
                 }
             });
+            
+            // Pré-remplir le champ email si l'utilisateur est déjà authentifié
+            if (window.SimpleAdminAuth.isAuthenticatedAsAdmin()) {
+                document.getElementById('adminEmail').value = window.SimpleAdminAuth.getAdminEmail();
+            }
         });
     </script>
     
@@ -256,49 +128,18 @@
             font-size: 0.95rem;
             font-weight: 500;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .connection-status.online {
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
         
-        .connection-status.offline {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
-        .connection-status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .note {
-            background: #fff3cd;
-            color: #856404;
+        .help-text {
+            background: #f8f9fa;
             padding: 1rem;
             border-radius: 8px;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-        }
-        
-        .help-text {
+            border-left: 4px solid #007bff;
             margin-top: 1rem;
             font-size: 0.9rem;
-            color: var(--gray);
-        }
-        
-        .help-text a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .help-text a:hover {
-            text-decoration: underline;
         }
         
         /* Animation de chargement */
