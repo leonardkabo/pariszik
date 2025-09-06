@@ -4,52 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Administration</title>
-    <!-- Firebase SDK (uniquement pour l'authentification de base) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/mega-upload.js"></script>
+    <script src="js/mega-real.js"></script>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Favicon et icônes -->
-    <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
-    <link rel="apple-touch-icon" sizes="192x192" href="assets/images/icon-192.webp">
-    <link rel="apple-touch-icon" sizes="512x512" href="assets/images/icon-512.webp">
-    <!-- Ajoutez ce code dans la section <head> de votre fichier admin.html -->
-<style>
-    /* Ajoutez ces styles pour améliorer l'affichage des fichiers uploadés */
-    .file-info {
-        margin-top: 0.5rem;
-        font-size: 0.9rem;
-        color: #666;
-    }
-    
-    .file-type {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 5px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-right: 0.5rem;
-    }
-    
-    .file-type.audio {
-        background: #007bff;
-        color: white;
-    }
-    
-    .file-type.video {
-        background: #28a745;
-        color: white;
-    }
-    
-    .file-type.image {
-        background: #ffc107;
-        color: #212529;
-    }
-</style>
 </head>
 <body>
     <header>
@@ -70,7 +33,7 @@
         <div class="container">
             <div class="admin-header">
                 <h1>Panel d'Administration - ParisZik</h1>
-                <p id="adminStatus">Bienvenue dans le panel d'administration</p>
+                <p id="adminStatus">Connexion à MEGA en cours...</p>
             </div>
             
             <div id="adminContent">
@@ -117,17 +80,16 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="thumbnail">Miniature/Cover (optionnel)</label>
+                            <label for="thumbnail">Miniature (optionnel)</label>
                             <input type="file" id="thumbnail" accept="image/*">
                             <div id="thumbnailPreview" class="thumbnail-preview" style="display: none;">
                                 <img id="thumbnailImg" src="#" alt="Aperçu de la miniature">
                             </div>
-                            <p class="help-text">Si aucune image n'est sélectionnée, la cover par défaut sera utilisée.</p>
                         </div>
                         
                         <div class="form-group">
                             <label for="fileUpload" class="file-upload-label">
-                                <input type="file" id="fileUpload" accept="audio/*,video/*">
+                                <input type="file" id="fileUpload" accept="audio/*,video/*" required>
                                 <span>📁 Cliquez ici pour sélectionner un fichier</span>
                                 <p id="fileInfo">Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)</p>
                             </label>
@@ -177,208 +139,217 @@
     </footer>
 
     <script>
-        // Vérifier l'authentification admin au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser la page d'administration
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Page d\'administration chargée');
             
-            // Vérifier si l'utilisateur est authentifié comme admin
-            if (!window.SimpleAdminAuth.isAuthenticatedAsAdmin()) {
-                console.log('Accès non autorisé - Redirection vers admin-access.html');
-                alert('⛔ Accès non autorisé. Veuillez vous connecter en tant qu\'administrateur.');
-                window.location.href = 'admin-access.html';
-                return;
+            const adminStatus = document.getElementById('adminStatus');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            try {
+                // Initialiser MEGA
+                adminStatus.textContent = 'Connexion à MEGA en cours...';
+                
+                const megaSuccess = await window.ParisZikMegaReal.initializeForAdmin();
+                
+                if (megaSuccess) {
+                    adminStatus.textContent = '✅ Connecté à MEGA - Prêt pour les uploads';
+                    adminStatus.style.color = '#28a745';
+                } else {
+                    adminStatus.textContent = '❌ Erreur de connexion à MEGA - Veuillez vérifier vos identifiants';
+                    adminStatus.style.color = '#dc3545';
+                    uploadBtn.disabled = true;
+                }
+                
+                // Continuer avec l'initialisation du reste de la page
+                initializeAdminPage();
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation de MEGA:', error);
+                adminStatus.textContent = '❌ Erreur critique lors de l\'initialisation de MEGA';
+                adminStatus.style.color = '#dc3545';
+                uploadBtn.disabled = true;
             }
-            
-            console.log('Accès admin autorisé');
-            document.getElementById('adminStatus').textContent = '✅ Bienvenue ' + window.SimpleAdminAuth.getAdminEmail();
-            
+        });
+        
+        // Initialiser la page d'administration
+        function initializeAdminPage() {
             // Gestion de la déconnexion
             document.getElementById('logoutBtn').addEventListener('click', function() {
-                const result = window.SimpleAdminAuth.logout();
-                if (result.success) {
-                    alert('Déconnexion réussie');
-                    window.location.href = 'index.html';
+                if (window.SimpleAdminAuth) {
+                    window.SimpleAdminAuth.logout();
                 }
+                window.location.href = 'index.html';
             });
             
             // Charger les contenus existants
             loadExistingContent();
             
             // Gestion du formulaire d'upload
-            document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const contentType = document.getElementById('contentType').value;
-                const title = document.getElementById('title').value;
-                const artist = document.getElementById('artist').value;
-                const description = document.getElementById('description').value;
-                const category = document.getElementById('category').value;
-                const thumbnailFile = document.getElementById('thumbnail').files[0];
-                const mediaFile = document.getElementById('fileUpload').files[0];
-                
-                if (!contentType || !title || !artist) {
-                    alert('Veuillez remplir tous les champs obligatoires');
-                    return;
-                }
-                
-                if (!mediaFile) {
-                    alert('Veuillez sélectionner un fichier à uploader');
-                    return;
-                }
-                
-                // Afficher l'indicateur de progression
-                const uploadBtn = document.getElementById('uploadBtn');
-                const originalText = uploadBtn.textContent;
-                uploadBtn.textContent = 'Upload en cours...';
-                uploadBtn.disabled = true;
-                document.getElementById('uploadProgress').style.display = 'block';
-                
-                try {
-                    // Upload du fichier média vers MEGA
-                    console.log('Début de l\'upload vers MEGA...');
-                    showUploadStatus('Upload du fichier média vers MEGA en cours...', 'info');
-                    
-                    const mediaResult = await window.MegaUploader.uploadFile(mediaFile);
-                    
-                    if (!mediaResult.success) {
-                        throw new Error('Erreur lors de l\'upload du fichier média: ' + mediaResult.message);
-                    }
-                    
-                    console.log('Fichier média uploadé avec succès:', mediaResult);
-                    showUploadStatus('Fichier média uploadé avec succès', 'success');
-                    
-                    // Upload de la miniature vers MEGA (si fournie)
-                    let thumbnailUrl = 'assets/images/default-cover.webp'; // Cover par défaut
-                    if (thumbnailFile) {
-                        showUploadStatus('Upload de la miniature vers MEGA en cours...', 'info');
-                        const thumbnailResult = await window.MegaUploader.uploadFile(thumbnailFile);
-                        
-                        if (thumbnailResult.success) {
-                            thumbnailUrl = thumbnailResult.fileUrl;
-                            console.log('Miniature uploadée avec succès:', thumbnailResult);
-                            showUploadStatus('Miniature uploadée avec succès', 'success');
-                        } else {
-                            console.warn('Erreur lors de l\'upload de la miniature, utilisation de la cover par défaut');
-                            showUploadStatus('Erreur lors de l\'upload de la miniature, utilisation de la cover par défaut', 'warning');
-                        }
-                    }
-                    
-                    // Créer l'objet contenu
-                    const contentData = {
-                        id: 'content_' + Date.now(),
-                        title: title,
-                        artist: artist,
-                        description: description,
-                        category: category,
-                        contentType: contentType,
-                        fileUrl: mediaResult.fileUrl,
-                        fileName: mediaFile.name,
-                        fileSize: mediaFile.size,
-                        thumbnailUrl: thumbnailUrl,
-                        uploadedAt: new Date().toISOString(),
-                        uploadedBy: window.SimpleAdminAuth.getAdminEmail(),
-                        views: 0,
-                        likes: 0,
-                        isLive: contentType === 'live',
-                        isFavorite: false
-                    };
-                    
-                    // Sauvegarder le contenu dans localStorage (pour le développement)
-                    saveContentToLocal(contentData);
-                    
-                    // Ajouter le contenu à l'interface
-                    addContentToGrid(contentData);
-                    
-                    // Réinitialiser le formulaire
-                    document.getElementById('uploadForm').reset();
-                    document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
-                    document.getElementById('thumbnailPreview').style.display = 'none';
-                    document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
-                    
-                    // Réinitialiser les boutons
-                    uploadBtn.textContent = originalText;
-                    uploadBtn.disabled = false;
-                    document.getElementById('uploadProgress').style.display = 'none';
-                    document.getElementById('progressBar').style.width = '0%';
-                    document.getElementById('progressText').textContent = '0%';
-                    
-                    showUploadStatus(`✅ Upload réussi ! ${title} par ${artist} a été publié sur ParisZik.`, 'success');
-                    
-                    // Notification de succès
-                    alert('Contenu publié avec succès !');
-                    
-                } catch (error) {
-                    console.error('Erreur lors de l\'upload:', error);
-                    showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
-                    
-                    // Réinitialiser les boutons
-                    uploadBtn.textContent = originalText;
-                    uploadBtn.disabled = false;
-                    document.getElementById('uploadProgress').style.display = 'none';
-                }
-            });
+            document.getElementById('uploadForm').addEventListener('submit', handleUploadSubmit);
             
-            // Gestion du changement de fichier média
-            document.getElementById('fileUpload').addEventListener('change', function() {
-                if (this.files.length > 0) {
-                    const file = this.files[0];
-                    document.querySelector('.file-upload-label span').textContent = file.name;
-                    document.getElementById('fileInfo').textContent = `${file.name} (${formatFileSize(file.size)})`;
-                } else {
-                    document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
-                    document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
-                }
-            });
+            // Gestion du changement de fichier
+            document.getElementById('fileUpload').addEventListener('change', handleFileChange);
             
             // Gestion du changement de miniature
-            document.getElementById('thumbnail').addEventListener('change', function() {
-                if (this.files.length > 0) {
-                    const file = this.files[0];
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        document.getElementById('thumbnailImg').src = e.target.result;
-                        document.getElementById('thumbnailPreview').style.display = 'block';
-                    };
-                    
-                    reader.readAsDataURL(file);
-                } else {
-                    document.getElementById('thumbnailPreview').style.display = 'none';
-                }
-            });
+            document.getElementById('thumbnail').addEventListener('change', handleThumbnailChange);
             
-            // Gestion des filtres
+            // Gestion des filtres et recherche
             document.getElementById('contentFilter').addEventListener('change', filterContent);
             document.getElementById('searchContent').addEventListener('input', filterContent);
-        });
-        
-        // Fonction pour sauvegarder le contenu dans localStorage
-        function saveContentToLocal(contentData) {
-            // Récupérer les contenus existants
-            let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
-            
-            // Ajouter le nouveau contenu
-            contents.push(contentData);
-            
-            // Sauvegarder dans localStorage
-            localStorage.setItem('pariszik_contents', JSON.stringify(contents));
-            
-            console.log('Contenu sauvegardé dans localStorage:', contentData);
         }
         
-        // Fonction pour charger les contenus existants
+        // Gestion du changement de fichier
+        function handleFileChange() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                document.querySelector('.file-upload-label span').textContent = file.name;
+                
+                // Afficher les informations du fichier
+                const fileSize = formatFileSize(file.size);
+                const fileType = getFileType(file.name);
+                document.getElementById('fileInfo').innerHTML = `${file.name} (${fileSize}) - Type: ${fileType}`;
+                
+                // Vérifier la taille du fichier
+                if (file.size > 200 * 1024 * 1024) {
+                    document.getElementById('fileInfo').innerHTML += '<br><span style="color: #dc3545;">⚠️ Fichier volumineux (max recommandé: 200MB)</span>';
+                }
+            } else {
+                document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+                document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
+            }
+        }
+        
+        // Gestion du changement de miniature
+        function handleThumbnailChange() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    document.getElementById('thumbnailImg').src = e.target.result;
+                    document.getElementById('thumbnailPreview').style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('thumbnailPreview').style.display = 'none';
+            }
+        }
+        
+        // Gestion de la soumission du formulaire d'upload
+        async function handleUploadSubmit(e) {
+            e.preventDefault();
+            
+            const contentType = document.getElementById('contentType').value;
+            const title = document.getElementById('title').value;
+            const artist = document.getElementById('artist').value;
+            const file = document.getElementById('fileUpload').files[0];
+            
+            if (!contentType || !title || !artist) {
+                showUploadStatus('Veuillez remplir tous les champs obligatoires.', 'error');
+                return;
+            }
+            
+            if (!file) {
+                showUploadStatus('Veuillez sélectionner un fichier à uploader.', 'error');
+                return;
+            }
+            
+            // Préparer les métadonnées
+            const metadata = {
+                title: title,
+                artist: artist,
+                description: document.getElementById('description').value,
+                category: document.getElementById('category').value,
+                contentType: contentType,
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: window.SimpleAdminAuth.getAdminEmail()
+            };
+            
+            // Démarrer l'upload
+            await startUpload(file, metadata);
+        }
+        
+        // Démarrer l'upload
+        async function startUpload(file, metadata) {
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalText = uploadBtn.textContent;
+            
+            // Activer l'indicateur de progression
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Upload en cours...';
+            document.getElementById('uploadProgress').style.display = 'block';
+            
+            try {
+                showUploadStatus('Upload en cours vers MEGA...', 'info');
+                
+                // Utiliser l'intégration réelle avec MEGA
+                const result = await window.ParisZikMegaReal.instance.uploadFile(file);
+                
+                showUploadStatus('Fichier uploadé sur MEGA avec succès', 'success');
+                
+                // Enregistrer le contenu dans localStorage
+                const contentData = {
+                    id: 'content_' + Date.now(),
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    description: metadata.description,
+                    category: metadata.category,
+                    contentType: metadata.contentType,
+                    fileUrl: result.fileUrl,
+                    fileName: result.fileName,
+                    fileSize: result.fileSize,
+                    fileType: getFileType(result.fileName),
+                    thumbnailUrl: document.getElementById('thumbnail').files[0] ? URL.createObjectURL(document.getElementById('thumbnail').files[0]) : 'assets/images/default-cover.webp',
+                    uploadedAt: metadata.uploadedAt,
+                    uploadedBy: metadata.uploadedBy,
+                    views: 0,
+                    likes: 0,
+                    isLive: metadata.contentType === 'live',
+                    megaFileId: result.megaFileId || result.fileId
+                };
+                
+                // Sauvegarder dans localStorage
+                saveContentToLocal(contentData);
+                
+                // Ajouter le nouveau contenu à la liste
+                addContentToGrid(contentData);
+                
+                // Réinitialiser le formulaire
+                resetForm();
+                
+                showUploadStatus(`✅ Upload réussi ! ${metadata.title} par ${metadata.artist} a été publié sur ParisZik.`, 'success');
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'upload vers MEGA:', error);
+                showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = originalText;
+                document.getElementById('uploadProgress').style.display = 'none';
+            }
+        }
+        
+        // Sauvegarder le contenu dans localStorage
+        function saveContentToLocal(contentData) {
+            let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+            contents.push(contentData);
+            localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+            console.log('Contenu sauvegardé:', contentData);
+        }
+        
+        // Charger les contenus existants
         function loadExistingContent() {
             try {
                 const existingContent = document.getElementById('existingContent');
                 existingContent.innerHTML = '';
                 
-                // Récupérer les contenus depuis localStorage
                 const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
                 
                 if (contents.length === 0) {
                     existingContent.innerHTML = '<p class="no-content">Aucun contenu trouvé. Commencez par en ajouter un !</p>';
                 } else {
-                    // Trier par date (les plus récents en premier)
                     contents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
                     
                     contents.forEach(content => {
@@ -391,23 +362,18 @@
             }
         }
         
-        // Fonction pour ajouter un contenu à la grille
+        // Ajouter un contenu à la grille
         function addContentToGrid(content) {
-            const existingContent = document.getElementById('existingContent');
             const card = document.createElement('div');
             card.className = 'admin-card';
             card.dataset.id = content.id;
             card.dataset.contentType = content.contentType;
             card.dataset.title = content.title;
             
-            // Formater la date
             const date = new Date(content.uploadedAt);
             const formattedDate = date.toLocaleDateString('fr-FR');
-            
-            // Formater la taille du fichier
             const formattedSize = formatFileSize(content.fileSize);
             
-            // Déterminer l'icône selon le type de contenu
             let icon = '🎵';
             if (content.contentType === 'video') icon = '🎬';
             if (content.contentType === 'live') icon = '🔴';
@@ -427,18 +393,12 @@
                     ${content.description ? `<p class="content-description">📝 ${content.description.substring(0, 100)}${content.description.length > 100 ? '...' : ''}</p>` : ''}
                 </div>
                 <div class="admin-card-actions">
-                    <button class="btn btn-view" data-id="${content.id}" title="Voir le contenu">
-                        👁️ Voir
-                    </button>
-                    <button class="btn btn-edit" data-id="${content.id}" title="Modifier le contenu">
-                        ✏️ Modifier
-                    </button>
-                    <button class="btn btn-delete" data-id="${content.id}" title="Supprimer le contenu">
-                        🗑️ Supprimer
-                    </button>
+                    <button class="btn btn-view" data-id="${content.id}" title="Voir le contenu">👁️ Voir</button>
+                    <button class="btn btn-edit" data-id="${content.id}" title="Modifier le contenu">✏️ Modifier</button>
+                    <button class="btn btn-delete" data-id="${content.id}" title="Supprimer le contenu">🗑️ Supprimer</button>
                 </div>
             `;
-            existingContent.appendChild(card);
+            document.getElementById('existingContent').appendChild(card);
             
             // Ajouter les gestionnaires d'événements
             card.querySelector('.btn-delete').addEventListener('click', function() {
@@ -448,23 +408,15 @@
             });
         }
         
-        // Fonction pour supprimer un contenu
+        // Supprimer un contenu
         function deleteContent(contentId) {
             try {
-                // Récupérer les contenus existants
                 let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
-                
-                // Filtrer pour supprimer le contenu
                 contents = contents.filter(content => content.id !== contentId);
-                
-                // Sauvegarder dans localStorage
                 localStorage.setItem('pariszik_contents', JSON.stringify(contents));
                 
-                // Supprimer la carte de l'interface
                 const card = document.querySelector(`.admin-card[data-id="${contentId}"]`);
-                if (card) {
-                    card.remove();
-                }
+                if (card) card.remove();
                 
                 alert('Contenu supprimé avec succès');
             } catch (error) {
@@ -473,7 +425,25 @@
             }
         }
         
-        // Fonction pour filtrer les contenus
+        // Réinitialiser le formulaire
+        function resetForm() {
+            document.getElementById('uploadForm').reset();
+            document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
+            document.getElementById('fileInfo').textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
+            document.getElementById('thumbnailPreview').style.display = 'none';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = '0%';
+        }
+        
+        // Afficher le statut de l'upload
+        function showUploadStatus(message, type) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.textContent = message;
+            uploadStatus.style.display = 'block';
+            uploadStatus.className = 'upload-status ' + type;
+        }
+        
+        // Filtrer les contenus
         function filterContent() {
             const filterValue = document.getElementById('contentFilter').value;
             const searchTerm = document.getElementById('searchContent').value.toLowerCase();
@@ -495,40 +465,6 @@
                     card.style.display = 'none';
                 }
             });
-            
-            if (visibleCount === 0) {
-                const existingContent = document.getElementById('existingContent');
-                if (!document.querySelector('.no-results')) {
-                    const noResults = document.createElement('p');
-                    noResults.className = 'no-results';
-                    noResults.textContent = 'Aucun contenu ne correspond à votre recherche.';
-                    existingContent.appendChild(noResults);
-                }
-            } else {
-                const noResults = document.querySelector('.no-results');
-                if (noResults) noResults.remove();
-            }
-        }
-        
-        // Fonction pour afficher le statut de l'upload
-        function showUploadStatus(message, type) {
-            const uploadStatus = document.getElementById('uploadStatus');
-            uploadStatus.textContent = message;
-            uploadStatus.style.display = 'block';
-            
-            // Supprimer les classes précédentes
-            uploadStatus.classList.remove('success', 'error', 'warning', 'info');
-            
-            // Ajouter la classe correspondante au type
-            if (type === 'success') {
-                uploadStatus.classList.add('success');
-            } else if (type === 'error') {
-                uploadStatus.classList.add('error');
-            } else if (type === 'warning') {
-                uploadStatus.classList.add('warning');
-            } else {
-                uploadStatus.classList.add('info');
-            }
         }
         
         // Fonction utilitaire pour formater la taille des fichiers
@@ -538,6 +474,18 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Fonction utilitaire pour déterminer le type de fichier
+        function getFileType(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(extension)) {
+                return 'audio';
+            } else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'].includes(extension)) {
+                return 'video';
+            } else {
+                return 'unknown';
+            }
         }
     </script>
     
@@ -662,22 +610,10 @@
             border: 1px solid #f5c6cb;
         }
         
-        .upload-status.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
         .upload-status.info {
             background: #d1ecf1;
             color: #0c5460;
             border: 1px solid #bee5eb;
-        }
-        
-        .help-text {
-            font-size: 0.85rem;
-            color: #6c757d;
-            margin-top: 0.5rem;
         }
         
         .content-thumbnail {
@@ -686,17 +622,6 @@
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 1rem;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .filter-controls {
-                flex-direction: column;
-            }
-            
-            .search-input {
-                min-width: auto;
-            }
         }
     </style>
 </body>

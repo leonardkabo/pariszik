@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Découvrez la musique du monde entier</title>
-    <!-- Firebase SDK (uniquement pour l'authentification de base) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- Configuration et Initialisation -->
+    <!-- Configuration -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/audio-player.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <!-- Favicon et icônes -->
     <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
@@ -19,132 +18,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="assets/images/icon-512.webp">
 </head>
 <body>
-    <header>
-        <div class="container header-container">
-            <div class="logo">Paris<span>Zik</span></div>
-            
-            <!-- Menu hamburger pour mobile -->
-            <button class="hamburger" id="hamburgerBtn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            
-            <nav id="mainNav">
-                <ul>
-                    <li><a href="index.html" class="active">Accueil</a></li>
-                    <li><a href="library.html">Bibliothèque</a></li>
-                    <li><a href="live.html">En Direct</a></li>
-                    <li><a href="#">Clips</a></li>
-                    <li><a href="#">Artistes</a></li>
-                </ul>
-            </nav>
-            
-            <div class="auth-buttons" id="authButtons">
-                <a href="login.html" class="btn btn-secondary" id="loginBtn">Se connecter</a>
-                <a href="signup.html" class="btn btn-primary" id="signupBtn">S'inscrire</a>
-                <a href="admin.html" class="btn btn-admin" id="adminBtn" style="display: none;">Admin</a>
-                <div class="user-menu" id="userMenu" style="display: none;">
-                    <span id="userName">Utilisateur</span>
-                    <button class="btn btn-secondary" id="logoutBtn">Déconnexion</button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Sidebar pour desktop -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <img src="assets/images/logo-pariszik.webp" alt="ParisZik Logo" class="sidebar-logo">
-            <h3>ParisZik</h3>
-        </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="index.html" class="active">Accueil</a></li>
-                <li><a href="library.html">Bibliothèque</a></li>
-                <li><a href="favorites.html">Favoris</a></li>
-                <li><a href="recent.html">Derniers ajouts</a></li>
-                <li><a href="playlists.html">Playlists</a></li>
-                <li><a href="artists.html">Artistes</a></li>
-                <li><a href="categories.html">Catégories</a></li>
-                <li><a href="live.html">En Direct</a></li>
-            </ul>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar" id="sidebarUserAvatar">👤</div>
-                <div class="user-details">
-                    <div class="user-name" id="sidebarUserName">Utilisateur</div>
-                    <div class="user-role" id="sidebarUserRole">Membre</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Overlay pour mobile -->
-    <div class="overlay" id="overlay"></div>
-
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>ParisZik</h1>
-                <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct</p>
-                <div class="search-bar">
-                    <input type="text" placeholder="Rechercher un artiste, un titre, un album...">
-                    <button>Rechercher</button>
-                </div>
-            </div>
-        </section>
-
-        <div class="tabs">
-            <div class="container">
-                <div class="tab active" data-tab="popular">Populaire</div>
-                <div class="tab" data-tab="new">Nouveautés</div>
-                <div class="tab" data-tab="live">En Direct</div>
-                <div class="tab" data-tab="playlists">Playlists</div>
-            </div>
-        </div>
-
-        <section class="content-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Derniers clips ajoutés</h2>
-                    <a href="library.html" class="view-more-btn">Voir plus →</a>
-                </div>
-                <div class="content-grid" id="recentContent">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p>Chargement des derniers clips...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">En ce moment</h2>
-                    <a href="trending.html" class="view-more-btn">Voir plus →</a>
-                </div>
-                <div class="content-grid" id="popularContent">
-                    <!-- Contenu populaire -->
-                </div>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Événements en direct</h2>
-                    <a href="live.html" class="view-more-btn">Voir plus →</a>
-                </div>
-                <div class="content-grid" id="liveContent">
-                    <!-- Événements en direct -->
-                </div>
-            </div>
-        </section>
-    </main>
+    <!-- Votre code HTML existant -->
 
     <!-- Audio Player -->
     <div class="audio-player" id="audioPlayer">
@@ -184,561 +58,62 @@
         </div>
     </div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-section">
-                    <img src="assets/images/logo-pariszik.webp" alt="ParisZik Logo" class="footer-logo">
-                    <h3>ParisZik</h3>
-                    <p>La plateforme de streaming musical qui vous connecte aux artistes du monde entier et aux événements en direct.</p>
-                    <div class="admin-access">
-                        <a href="admin-access.html" class="admin-link">accès admin</a>
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>Liens Rapides</h3>
-                    <ul class="footer-links">
-                        <li><a href="index.html">Accueil</a></li>
-                        <li><a href="library.html">Bibliothèque</a></li>
-                        <li><a href="live.html">En Direct</a></li>
-                        <li><a href="categories.html">Catégories</a></li>
-                        <li><a href="artists.html">Artistes</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Légal</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">Mentions Légales</a></li>
-                        <li><a href="#">Politique de Confidentialité</a></li>
-                        <li><a href="#">Conditions d'Utilisation</a></li>
-                        <li><a href="#">Cookies</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Contact</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">Support</a></li>
-                        <li><a href="#">Nous écrire</a></li>
-                        <li><a href="#">Carrières</a></li>
-                        <li><a href="#">Partenariats</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                &copy; 2023 ParisZik. Tous droits réservés.
-            </div>
-        </div>
-    </footer>
+    <!-- Votre code HTML existant -->
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page d\'accueil chargée');
+        // Fonction pour jouer un contenu
+        function playContent(content) {
+            // Créer un nouvel élément audio
+            const audio = new Audio();
             
-            // Initialiser le lecteur audio
-            window.AudioPlayer.init();
+            // Définir la source
+            audio.src = content.fileUrl;
             
-            // Éléments du DOM
-            const loginBtn = document.getElementById('loginBtn');
-            const signupBtn = document.getElementById('signupBtn');
-            const adminBtn = document.getElementById('adminBtn');
-            const userMenu = document.getElementById('userMenu');
-            const userName = document.getElementById('userName');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const sidebar = document.getElementById('sidebar');
-            const hamburgerBtn = document.getElementById('hamburgerBtn');
-            const overlay = document.getElementById('overlay');
-            const sidebarUserName = document.getElementById('sidebarUserName');
-            const sidebarUserRole = document.getElementById('sidebarUserRole');
-            const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
-            const recentContent = document.getElementById('recentContent');
-            const popularContent = document.getElementById('popularContent');
-            const liveContent = document.getElementById('liveContent');
-            
-            // Vérifier l'authentification admin
-            if (window.SimpleAdminAuth && window.SimpleAdminAuth.isAuthenticatedAsAdmin()) {
-                loginBtn.style.display = 'none';
-                signupBtn.style.display = 'none';
-                adminBtn.style.display = 'inline-block';
-                userMenu.style.display = 'flex';
-                userMenu.style.alignItems = 'center';
-                userMenu.style.gap = '10px';
-                userName.textContent = window.SimpleAdminAuth.getAdminEmail();
-                sidebarUserName.textContent = window.SimpleAdminAuth.getAdminEmail();
-                sidebarUserRole.textContent = 'Administrateur';
-                sidebarUserAvatar.textContent = window.SimpleAdminAuth.getAdminEmail().substring(0, 1).toUpperCase();
-            }
-            
-            // Gestion de la déconnexion
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function() {
-                    if (window.SimpleAdminAuth) {
-                        window.SimpleAdminAuth.logout();
-                    }
-                    location.reload();
+            // Gérer les événements
+            audio.onloadedmetadata = function() {
+                // Mettre à jour l'interface
+                document.querySelector('.player-title').textContent = content.title;
+                document.querySelector('.player-artist').textContent = content.artist;
+                document.querySelector('.player-img').src = content.thumbnailUrl || 'assets/images/default-cover.webp';
+                document.getElementById('totalTime').textContent = formatTime(audio.duration);
+                
+                // Jouer le fichier
+                audio.play().catch(error => {
+                    console.error('Erreur de lecture:', error);
+                    alert('Erreur lors de la lecture: ' + error.message);
                 });
-            }
+            };
             
-            // Gestion du menu hamburger
-            if (hamburgerBtn && overlay) {
-                hamburgerBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                    hamburgerBtn.classList.toggle('active');
-                    document.body.classList.toggle('no-scroll');
-                });
-                
-                overlay.addEventListener('click', function() {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                    document.body.classList.remove('no-scroll');
-                });
-            }
+            audio.ontimeupdate = function() {
+                document.getElementById('progressBar').style.width = (audio.currentTime / audio.duration * 100) + '%';
+                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+            };
             
-            // Charger les contenus
-            loadContent();
-        });
-        
-        // Fonction pour charger le contenu
-        function loadContent() {
-            try {
-                // Charger les contenus depuis localStorage
-                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
-                
-                // Trier par date (les plus récents en premier)
-                contents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-                
-                // Afficher les 3 derniers clips
-                const recentContent = document.getElementById('recentContent');
-                recentContent.innerHTML = '';
-                
-                if (contents.length === 0) {
-                    recentContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
+            audio.onended = function() {
+                document.getElementById('playBtn').textContent = '▶';
+            };
+            
+            // Mettre à jour le bouton play/pause
+            document.getElementById('playBtn').addEventListener('click', function() {
+                if (audio.paused) {
+                    audio.play();
+                    this.textContent = '⏸';
                 } else {
-                    // Prendre les 3 derniers clips
-                    const recentClips = contents.slice(0, 3);
-                    recentClips.forEach(content => {
-                        addContentCard(content, recentContent);
-                    });
+                    audio.pause();
+                    this.textContent = '▶';
                 }
-                
-                // Afficher les contenus populaires (par nombre de vues)
-                const popularContent = document.getElementById('popularContent');
-                popularContent.innerHTML = '';
-                
-                if (contents.length === 0) {
-                    popularContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
-                } else {
-                    // Trier par nombre de vues
-                    const popularClips = [...contents].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
-                    popularClips.forEach(content => {
-                        addContentCard(content, popularContent);
-                    });
-                }
-                
-                // Afficher les contenus en direct
-                const liveContent = document.getElementById('liveContent');
-                liveContent.innerHTML = '';
-                
-                if (contents.length === 0) {
-                    liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
-                } else {
-                    // Filtrer les contenus en direct
-                    const liveClips = contents.filter(content => content.isLive).slice(0, 3);
-                    if (liveClips.length === 0) {
-                        liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
-                    } else {
-                        liveClips.forEach(content => {
-                            addContentCard(content, liveContent);
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement des contenus:', error);
-                document.getElementById('recentContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
-                document.getElementById('popularContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
-                document.getElementById('liveContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
-            }
-        }
-        
-        // Fonction pour ajouter une carte de contenu
-        function addContentCard(content, container) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.dataset.id = content.id;
-            
-            // Déterminer l'icône selon le type de contenu
-            let icon = '🎵';
-            if (content.contentType === 'video') icon = '🎬';
-            if (content.contentType === 'live') icon = '🔴';
-            
-            // URL de la miniature (utiliser default-cover.webp si aucune miniature n'est fournie)
-            const thumbnailUrl = content.thumbnailUrl || 'assets/images/default-cover.webp';
-            
-            card.innerHTML = `
-                <div class="card-img-container">
-                    <img src="${thumbnailUrl}" alt="${content.title}" class="card-img">
-                    ${content.isLive ? '<div class="live-overlay"><div class="live-badge">LIVE</div></div>' : ''}
-                </div>
-                <div class="card-content">
-                    <h3 class="card-title">${icon} ${content.title}</h3>
-                    <p class="card-artist">👤 ${content.artist}</p>
-                    <div class="card-actions">
-                        <button class="play-btn" data-id="${content.id}" data-title="${content.title}" data-artist="${content.artist}" data-file-url="${content.fileUrl}" data-thumbnail-url="${thumbnailUrl}" title="Lire ce contenu">▶</button>
-                        <button class="favorite-btn" data-id="${content.id}" title="Ajouter aux favoris">❤️</button>
-                        ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-            
-            // Ajouter les gestionnaires d'événements
-            card.querySelector('.play-btn').addEventListener('click', function() {
-                const contentToPlay = {
-                    id: this.getAttribute('data-id'),
-                    title: this.getAttribute('data-title'),
-                    artist: this.getAttribute('data-artist'),
-                    fileUrl: this.getAttribute('data-file-url'),
-                    thumbnailUrl: this.getAttribute('data-thumbnail-url')
-                };
-                window.AudioPlayer.play(contentToPlay);
-            });
-            
-            card.querySelector('.favorite-btn').addEventListener('click', function() {
-                toggleFavorite(content.id, this);
             });
         }
         
-        // Fonction pour ajouter/supprimer des favoris
-        function toggleFavorite(contentId, button) {
-            try {
-                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
-                const contentIndex = contents.findIndex(c => c.id === contentId);
-                
-                if (contentIndex !== -1) {
-                    contents[contentIndex].isFavorite = !contents[contentIndex].isFavorite;
-                    
-                    if (contents[contentIndex].isFavorite) {
-                        button.textContent = '❤️';
-                        button.style.color = '#dc3545';
-                        alert('Ajouté aux favoris');
-                    } else {
-                        button.textContent = '❤️';
-                        button.style.color = '';
-                        alert('Retiré des favoris');
-                    }
-                    
-                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
-                    
-                    // Mettre à jour le bouton du lecteur si le contenu est en lecture
-                    if (window.AudioPlayer.currentContent && window.AudioPlayer.currentContent.id === contentId) {
-                        const playerFavoriteBtn = document.getElementById('playerFavoriteBtn');
-                        if (playerFavoriteBtn) {
-                            playerFavoriteBtn.textContent = contents[contentIndex].isFavorite ? '❤️' : '❤️';
-                            playerFavoriteBtn.style.color = contents[contentIndex].isFavorite ? '#dc3545' : '';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur lors de la gestion des favoris:', error);
-            }
+        // Fonction pour formater le temps
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
         }
+        
+        // Le reste de votre code JavaScript
     </script>
-    
-    <style>
-        /* Styles pour la page d'accueil */
-        .sidebar-logo, .footer-logo {
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-            margin-bottom: 1rem;
-        }
-        
-        .card-img-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            overflow: hidden;
-            border-radius: 15px 15px 0 0;
-        }
-        
-        .card-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        
-        .card-img-container:hover .card-img {
-            transform: scale(1.05);
-        }
-        
-        .live-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(220, 53, 69, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .live-badge-small {
-            background: var(--danger);
-            color: var(--light);
-            padding: 0.3rem 0.6rem;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .card-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-        }
-        
-        .favorite-btn {
-            background: none;
-            border: none;
-            color: #666;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .favorite-btn:hover {
-            color: #dc3545;
-            transform: scale(1.1);
-        }
-        
-        .favorite-btn.active {
-            color: #dc3545;
-        }
-        
-        /* Audio Player Styles */
-        .audio-player {
-            background: var(--secondary);
-            color: var(--light);
-            padding: 1rem 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            z-index: 999;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .player-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        
-        .player-cover {
-            width: 60px;
-            height: 60px;
-            flex-shrink: 0;
-        }
-        
-        .player-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 10px;
-            object-fit: cover;
-            border: 2px solid var(--primary);
-        }
-        
-        .player-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .player-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .player-artist {
-            color: #ccc;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .player-progress {
-            margin: 0.8rem 0;
-        }
-        
-        .progress-bar-container {
-            width: 100%;
-            height: 5px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 5px;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: var(--highlight);
-            border-radius: 5px;
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-        
-        .progress-time {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: #ccc;
-            margin-top: 0.3rem;
-        }
-        
-        .player-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-shrink: 0;
-        }
-        
-        .control-btn {
-            background: rgba(255,255,255,0.1);
-            color: var(--light);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            font-size: 1.2rem;
-        }
-        
-        .control-btn:hover {
-            background: var(--primary);
-            transform: scale(1.1);
-        }
-        
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .volume-btn {
-            background: none;
-            border: none;
-            color: var(--light);
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .volume-btn:hover {
-            color: var(--highlight);
-        }
-        
-        .volume-slider-container {
-            position: relative;
-            width: 80px;
-            height: 5px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .volume-slider {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .volume-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: var(--highlight);
-            border-radius: 5px;
-            width: 70%;
-        }
-        
-        .player-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-shrink: 0;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .player-container {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                padding: 0 1rem;
-            }
-            
-            .player-cover {
-                width: 50px;
-                height: 50px;
-            }
-            
-            .player-info {
-                flex: 1;
-            }
-            
-            .player-controls {
-                flex: 1;
-                justify-content: center;
-            }
-            
-            .volume-control {
-                display: none;
-            }
-            
-            .player-actions {
-                flex: 0;
-            }
-            
-            .card-img-container {
-                height: 150px;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .player-container {
-                gap: 0.3rem;
-            }
-            
-            .player-title {
-                font-size: 1rem;
-            }
-            
-            .player-artist {
-                font-size: 0.8rem;
-            }
-            
-            .control-btn {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-        }
-    </style>
 </body>
 </html>
