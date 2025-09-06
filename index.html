@@ -7,6 +7,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
@@ -61,59 +62,320 @@
     <!-- Votre code HTML existant -->
 
     <script>
-        // Fonction pour jouer un contenu
-        function playContent(content) {
-            // Créer un nouvel élément audio
-            const audio = new Audio();
+        // Variables globales
+        let currentAudio = null;
+        let isPlaying = false;
+        let currentContent = null;
+        
+        // Initialiser la page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page d\'accueil chargée');
             
-            // Définir la source
-            audio.src = content.fileUrl;
+            // Initialiser les gestionnaires d'événements
+            initializeEventListeners();
             
-            // Gérer les événements
-            audio.onloadedmetadata = function() {
-                // Mettre à jour l'interface
-                document.querySelector('.player-title').textContent = content.title;
-                document.querySelector('.player-artist').textContent = content.artist;
-                document.querySelector('.player-img').src = content.thumbnailUrl || 'assets/images/default-cover.webp';
-                document.getElementById('totalTime').textContent = formatTime(audio.duration);
+            // Charger les contenus
+            loadContent();
+        });
+        
+        // Initialiser les gestionnaires d'événements
+        function initializeEventListeners() {
+            // Gestion du bouton play/pause
+            document.getElementById('playBtn').addEventListener('click', togglePlayPause);
+            
+            // Gestion de la barre de progression
+            document.querySelector('.progress-bar-container').addEventListener('click', seek);
+            
+            // Gestion du volume
+            document.getElementById('volumeBtn').addEventListener('click', toggleMute);
+            document.querySelector('.volume-slider-container').addEventListener('click', setVolume);
+            
+            // Gestion des favoris
+            document.getElementById('playerFavoriteBtn').addEventListener('click', toggleFavorite);
+        }
+        
+        // Charger le contenu
+        function loadContent() {
+            try {
+                // Charger les contenus depuis localStorage
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
                 
-                // Jouer le fichier
-                audio.play().catch(error => {
-                    console.error('Erreur de lecture:', error);
-                    alert('Erreur lors de la lecture: ' + error.message);
-                });
-            };
-            
-            audio.ontimeupdate = function() {
-                document.getElementById('progressBar').style.width = (audio.currentTime / audio.duration * 100) + '%';
-                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
-            };
-            
-            audio.onended = function() {
-                document.getElementById('playBtn').textContent = '▶';
-            };
-            
-            // Mettre à jour le bouton play/pause
-            document.getElementById('playBtn').addEventListener('click', function() {
-                if (audio.paused) {
-                    audio.play();
-                    this.textContent = '⏸';
+                // Trier par date (les plus récents en premier)
+                contents.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+                
+                // Afficher les 3 derniers clips
+                const recentContent = document.getElementById('recentContent');
+                recentContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    recentContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
                 } else {
-                    audio.pause();
-                    this.textContent = '▶';
+                    // Prendre les 3 derniers clips
+                    const recentClips = contents.slice(0, 3);
+                    recentClips.forEach(content => {
+                        addContentCard(content, recentContent);
+                    });
                 }
+                
+                // Afficher les contenus populaires (par nombre de vues)
+                const popularContent = document.getElementById('popularContent');
+                popularContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    popularContent.innerHTML = '<p class="no-content">Aucun contenu disponible pour le moment.</p>';
+                } else {
+                    // Trier par nombre de vues
+                    const popularClips = [...contents].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
+                    popularClips.forEach(content => {
+                        addContentCard(content, popularContent);
+                    });
+                }
+                
+                // Afficher les contenus en direct
+                const liveContent = document.getElementById('liveContent');
+                liveContent.innerHTML = '';
+                
+                if (contents.length === 0) {
+                    liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
+                } else {
+                    // Filtrer les contenus en direct
+                    const liveClips = contents.filter(content => content.isLive).slice(0, 3);
+                    if (liveClips.length === 0) {
+                        liveContent.innerHTML = '<p class="no-content">Aucun événement en direct pour le moment.</p>';
+                    } else {
+                        liveClips.forEach(content => {
+                            addContentCard(content, liveContent);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des contenus:', error);
+                document.getElementById('recentContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+                document.getElementById('popularContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+                document.getElementById('liveContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus.</p>';
+            }
+        }
+        
+        // Ajouter une carte de contenu
+        function addContentCard(content, container) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = content.id;
+            
+            // Déterminer l'icône selon le type de contenu
+            let icon = '🎵';
+            if (content.contentType === 'video') icon = '🎬';
+            if (content.contentType === 'live') icon = '🔴';
+            
+            // URL de la miniature (utiliser default-cover.webp si aucune miniature n'est fournie)
+            const thumbnailUrl = content.thumbnailUrl || 'assets/images/default-cover.webp';
+            
+            card.innerHTML = `
+                <div class="card-img-container">
+                    <img src="${thumbnailUrl}" alt="${content.title}" class="card-img">
+                    ${content.isLive ? '<div class="live-overlay"><div class="live-badge">LIVE</div></div>' : ''}
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${icon} ${content.title}</h3>
+                    <p class="card-artist">👤 ${content.artist}</p>
+                    <div class="card-actions">
+                        <button class="play-btn" data-id="${content.id}" data-title="${content.title}" data-artist="${content.artist}" data-file-url="${content.fileUrl}" data-thumbnail-url="${thumbnailUrl}" title="Lire ce contenu">▶</button>
+                        <button class="favorite-btn" data-id="${content.id}" title="Ajouter aux favoris">❤️</button>
+                        ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+            
+            // Ajouter les gestionnaires d'événements
+            card.querySelector('.play-btn').addEventListener('click', function() {
+                const contentToPlay = {
+                    id: this.getAttribute('data-id'),
+                    title: this.getAttribute('data-title'),
+                    artist: this.getAttribute('data-artist'),
+                    fileUrl: this.getAttribute('data-file-url'),
+                    thumbnailUrl: this.getAttribute('data-thumbnail-url')
+                };
+                playContent(contentToPlay);
+            });
+            
+            card.querySelector('.favorite-btn').addEventListener('click', function() {
+                toggleFavoriteContent(content.id, this);
             });
         }
         
-        // Fonction pour formater le temps
+        // Jouer un contenu
+        function playContent(content) {
+            // Arrêter la lecture en cours si nécessaire
+            if (currentAudio) {
+                currentAudio.pause();
+            }
+            
+            // Créer un nouvel élément audio
+            currentAudio = new Audio();
+            currentAudio.src = content.fileUrl;
+            currentContent = content;
+            
+            // Mettre à jour l'interface du lecteur
+            updatePlayerUI(content);
+            
+            // Gérer les événements audio
+            currentAudio.onloadedmetadata = function() {
+                document.getElementById('totalTime').textContent = formatTime(currentAudio.duration);
+            };
+            
+            currentAudio.ontimeupdate = function() {
+                document.getElementById('progressBar').style.width = (currentAudio.currentTime / currentAudio.duration * 100) + '%';
+                document.getElementById('currentTime').textContent = formatTime(currentAudio.currentTime);
+            };
+            
+            currentAudio.onplay = function() {
+                isPlaying = true;
+                document.getElementById('playBtn').textContent = '⏸';
+            };
+            
+            currentAudio.onpause = function() {
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            };
+            
+            currentAudio.onended = function() {
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            };
+            
+            currentAudio.onerror = function() {
+                console.error('Erreur de lecture:', currentAudio.error);
+                alert('Erreur lors de la lecture du fichier. Veuillez réessayer.');
+            };
+            
+            // Jouer le fichier
+            currentAudio.play().catch(error => {
+                console.error('Erreur de lecture:', error);
+                alert('Erreur lors de la lecture: ' + error.message);
+            });
+            
+            // Incrémenter le nombre de vues
+            incrementViews(content.id);
+        }
+        
+        // Mettre à jour l'interface du lecteur
+        function updatePlayerUI(content) {
+            document.querySelector('.player-title').textContent = content.title;
+            document.querySelector('.player-artist').textContent = content.artist;
+            document.querySelector('.player-img').src = content.thumbnailUrl || 'assets/images/default-cover.webp';
+        }
+        
+        // Basculer lecture/pause
+        function togglePlayPause() {
+            if (!currentAudio) return;
+            
+            if (isPlaying) {
+                currentAudio.pause();
+            } else {
+                currentAudio.play().catch(error => {
+                    console.error('Erreur de lecture:', error);
+                    alert('Erreur lors de la lecture: ' + error.message);
+                });
+            }
+        }
+        
+        // Rechercher dans le fichier
+        function seek(e) {
+            if (!currentAudio || !currentAudio.duration) return;
+            
+            const progressBar = document.querySelector('.progress-bar-container');
+            const clickX = e.offsetX;
+            const width = progressBar.offsetWidth;
+            const seekTime = (clickX / width) * currentAudio.duration;
+            
+            currentAudio.currentTime = seekTime;
+        }
+        
+        // Activer/Désactiver le son
+        function toggleMute() {
+            if (!currentAudio) return;
+            
+            currentAudio.muted = !currentAudio.muted;
+            document.getElementById('volumeBtn').textContent = currentAudio.muted ? '🔇' : '🔊';
+        }
+        
+        // Définir le volume
+        function setVolume(e) {
+            if (!currentAudio) return;
+            
+            const volumeSlider = document.querySelector('.volume-slider-container');
+            const clickX = e.offsetX;
+            const width = volumeSlider.offsetWidth;
+            const volume = clickX / width;
+            
+            currentAudio.volume = volume;
+            document.getElementById('volumeBar').style.width = (volume * 100) + '%';
+            
+            // Changer l'icône selon le volume
+            if (volume === 0) {
+                document.getElementById('volumeBtn').textContent = '🔇';
+            } else if (volume < 0.5) {
+                document.getElementById('volumeBtn').textContent = '🔉';
+            } else {
+                document.getElementById('volumeBtn').textContent = '🔊';
+            }
+        }
+        
+        // Basculer favori
+        function toggleFavorite() {
+            if (!currentContent) return;
+            toggleFavoriteContent(currentContent.id, document.getElementById('playerFavoriteBtn'));
+        }
+        
+        // Basculer favori pour un contenu
+        function toggleFavoriteContent(contentId, button) {
+            try {
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                const contentIndex = contents.findIndex(c => c.id === contentId);
+                
+                if (contentIndex !== -1) {
+                    contents[contentIndex].isFavorite = !contents[contentIndex].isFavorite;
+                    
+                    if (contents[contentIndex].isFavorite) {
+                        button.textContent = '❤️';
+                        button.style.color = '#dc3545';
+                        alert('Ajouté aux favoris');
+                    } else {
+                        button.textContent = '❤️';
+                        button.style.color = '';
+                        alert('Retiré des favoris');
+                    }
+                    
+                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                }
+            } catch (error) {
+                console.error('Erreur lors de la gestion des favoris:', error);
+            }
+        }
+        
+        // Incrémenter le nombre de vues
+        function incrementViews(contentId) {
+            try {
+                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                const contentIndex = contents.findIndex(c => c.id === contentId);
+                
+                if (contentIndex !== -1) {
+                    contents[contentIndex].views = (contents[contentIndex].views || 0) + 1;
+                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'incrémentation des vues:', error);
+            }
+        }
+        
+        // Formater le temps
         function formatTime(seconds) {
             if (isNaN(seconds)) return '0:00';
             const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
         }
-        
-        // Le reste de votre code JavaScript
     </script>
 </body>
 </html>

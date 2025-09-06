@@ -7,11 +7,12 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/mega-real.js"></script>
+    <script src="js/storage.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -33,7 +34,7 @@
         <div class="container">
             <div class="admin-header">
                 <h1>Panel d'Administration - ParisZik</h1>
-                <p id="adminStatus">Connexion à MEGA en cours...</p>
+                <p id="adminStatus">Initialisation du système de stockage...</p>
             </div>
             
             <div id="adminContent">
@@ -104,7 +105,7 @@
                         
                         <div id="uploadStatus" class="upload-status"></div>
                         
-                        <button type="submit" class="btn btn-primary" id="uploadBtn">Uploader vers MEGA et publier</button>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">Uploader et publier</button>
                     </form>
                 </div>
                 
@@ -147,16 +148,16 @@
             const uploadBtn = document.getElementById('uploadBtn');
             
             try {
-                // Initialiser MEGA
-                adminStatus.textContent = 'Connexion à MEGA en cours...';
+                // Initialiser Firebase Storage
+                adminStatus.textContent = 'Initialisation du système de stockage...';
                 
-                const megaSuccess = await window.ParisZikMegaReal.initializeForAdmin();
+                const storageSuccess = await window.ParisZikStorage.initialize();
                 
-                if (megaSuccess) {
-                    adminStatus.textContent = '✅ Connecté à MEGA - Prêt pour les uploads';
+                if (storageSuccess) {
+                    adminStatus.textContent = '✅ Système de stockage prêt - Prêt pour les uploads';
                     adminStatus.style.color = '#28a745';
                 } else {
-                    adminStatus.textContent = '❌ Erreur de connexion à MEGA - Veuillez vérifier vos identifiants';
+                    adminStatus.textContent = '❌ Erreur d\'initialisation du système de stockage';
                     adminStatus.style.color = '#dc3545';
                     uploadBtn.disabled = true;
                 }
@@ -165,8 +166,8 @@
                 initializeAdminPage();
                 
             } catch (error) {
-                console.error('Erreur lors de l\'initialisation de MEGA:', error);
-                adminStatus.textContent = '❌ Erreur critique lors de l\'initialisation de MEGA';
+                console.error('Erreur lors de l\'initialisation:', error);
+                adminStatus.textContent = '❌ Erreur critique lors de l\'initialisation';
                 adminStatus.style.color = '#dc3545';
                 uploadBtn.disabled = true;
             }
@@ -275,6 +276,8 @@
         async function startUpload(file, metadata) {
             const uploadBtn = document.getElementById('uploadBtn');
             const originalText = uploadBtn.textContent;
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
             
             // Activer l'indicateur de progression
             uploadBtn.disabled = true;
@@ -282,12 +285,12 @@
             document.getElementById('uploadProgress').style.display = 'block';
             
             try {
-                showUploadStatus('Upload en cours vers MEGA...', 'info');
+                showUploadStatus('Upload en cours...', 'info');
                 
-                // Utiliser l'intégration réelle avec MEGA
-                const result = await window.ParisZikMegaReal.instance.uploadFile(file);
+                // Utiliser l'intégration réelle avec Firebase Storage
+                const result = await window.ParisZikStorage.instance.uploadFile(file);
                 
-                showUploadStatus('Fichier uploadé sur MEGA avec succès', 'success');
+                showUploadStatus('Fichier uploadé avec succès', 'success');
                 
                 // Enregistrer le contenu dans localStorage
                 const contentData = {
@@ -307,7 +310,7 @@
                     views: 0,
                     likes: 0,
                     isLive: metadata.contentType === 'live',
-                    megaFileId: result.megaFileId || result.fileId
+                    storagePath: result.storagePath
                 };
                 
                 // Sauvegarder dans localStorage
@@ -322,7 +325,7 @@
                 showUploadStatus(`✅ Upload réussi ! ${metadata.title} par ${metadata.artist} a été publié sur ParisZik.`, 'success');
                 
             } catch (error) {
-                console.error('Erreur lors de l\'upload vers MEGA:', error);
+                console.error('Erreur lors de l\'upload:', error);
                 showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
             } finally {
                 uploadBtn.disabled = false;
@@ -409,12 +412,26 @@
         }
         
         // Supprimer un contenu
-        function deleteContent(contentId) {
+        async function deleteContent(contentId) {
             try {
                 let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
+                const contentToDelete = contents.find(content => content.id === contentId);
+                
+                if (contentToDelete && contentToDelete.storagePath) {
+                    // Supprimer le fichier de Firebase Storage
+                    try {
+                        await window.ParisZikStorage.instance.deleteFile(contentToDelete.storagePath);
+                        console.log('Fichier supprimé de Firebase Storage:', contentToDelete.storagePath);
+                    } catch (error) {
+                        console.warn('Erreur lors de la suppression du fichier de Firebase Storage:', error);
+                    }
+                }
+                
+                // Supprimer le contenu de localStorage
                 contents = contents.filter(content => content.id !== contentId);
                 localStorage.setItem('pariszik_contents', JSON.stringify(contents));
                 
+                // Supprimer la carte de l'interface
                 const card = document.querySelector(`.admin-card[data-id="${contentId}"]`);
                 if (card) card.remove();
                 
