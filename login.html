@@ -137,24 +137,46 @@
                     if (result.success) {
                         console.log('Connexion réussie:', result.user.email);
                         
-                        // Vérifier si l'utilisateur doit être admin
+                        // Vérifier si l'utilisateur est admin (uniquement pour votre email)
+                        let userRole = 'user';
+                        
+                        // Pour votre email spécifique, attribuer le rôle admin
                         if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
-                            // Forcer le rôle admin
+                            userRole = 'admin';
+                            
+                            // Mettre à jour le rôle dans Firestore
                             try {
-                                await window.ParisZikAuth.forceAdminRole(email);
-                                console.log('Rôle admin forcé pour:', email);
+                                await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).set({
+                                    role: 'admin'
+                                }, { merge: true });
+                                console.log('Rôle admin attribué dans Firestore');
                             } catch (error) {
-                                console.warn('Erreur lors du forçage du rôle admin:', error);
+                                console.warn('Erreur lors de la mise à jour du rôle dans Firestore:', error);
+                            }
+                        } else {
+                            // Pour les autres utilisateurs, vérifier le rôle dans Firestore
+                            try {
+                                const userDoc = await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).get();
+                                if (userDoc.exists) {
+                                    const userData = userDoc.data();
+                                    userRole = userData.role || 'user';
+                                }
+                            } catch (error) {
+                                console.warn('Erreur lors de la vérification du rôle:', error);
                             }
                         }
                         
-                        // Stocker les informations dans le localStorage
+                        // Mettre à jour le localStorage
                         localStorage.setItem('userId', result.user.uid);
                         localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
-                        localStorage.setItem('userRole', result.role);
+                        localStorage.setItem('userRole', userRole);
                         
                         // Afficher un message de succès
-                        alert('Connexion réussie ! Bienvenue sur ParisZik.');
+                        if (userRole === 'admin') {
+                            alert('Connexion réussie ! Bienvenue Administrateur.');
+                        } else {
+                            alert('Connexion réussie ! Bienvenue sur ParisZik.');
+                        }
                         
                         // Rediriger vers la page d'accueil
                         window.location.href = 'index.html';
@@ -180,11 +202,6 @@
                             break;
                         default:
                             errorMessage += error.message;
-                    }
-                    
-                    // Afficher un message d'erreur plus détaillé pour le mode admin
-                    if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
-                        errorMessage += '\n\nNOTE ADMIN: Si vous utilisez Google pour vous connecter habituellement, veuillez utiliser le bouton "Se connecter avec Google" ci-dessous.\n\nSi le problème persiste, essayez en mode navigation privée ou avec un autre navigateur.';
                     }
                     
                     alert(errorMessage);
@@ -238,14 +255,47 @@
                     if (result.success) {
                         console.log('Connexion Google réussie:', result.user.email);
                         
-                        // Stocker les informations dans le localStorage
+                        // Vérifier si l'utilisateur est admin (uniquement pour votre email)
+                        let userRole = 'user';
+                        
+                        // Pour votre email spécifique, attribuer le rôle admin
+                        if (result.user.email.toLowerCase() === 'leonardkabo32@gmail.com') {
+                            userRole = 'admin';
+                            
+                            // Mettre à jour le rôle dans Firestore
+                            try {
+                                await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).set({
+                                    role: 'admin'
+                                }, { merge: true });
+                                console.log('Rôle admin attribué dans Firestore');
+                            } catch (error) {
+                                console.warn('Erreur lors de la mise à jour du rôle dans Firestore:', error);
+                            }
+                        } else {
+                            // Pour les autres utilisateurs, vérifier le rôle dans Firestore
+                            try {
+                                const userDoc = await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).get();
+                                if (userDoc.exists) {
+                                    const userData = userDoc.data();
+                                    userRole = userData.role || 'user';
+                                }
+                            } catch (error) {
+                                console.warn('Erreur lors de la vérification du rôle:', error);
+                            }
+                        }
+                        
+                        // Mettre à jour le localStorage
                         localStorage.setItem('userId', result.user.uid);
                         localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
-                        localStorage.setItem('userRole', result.role);
+                        localStorage.setItem('userRole', userRole);
                         localStorage.setItem('userPhoto', result.user.photoURL || '');
                         
                         // Afficher un message de succès
-                        alert('Connexion Google réussie !');
+                        if (userRole === 'admin') {
+                            alert('Connexion Google réussie ! Bienvenue Administrateur.');
+                        } else {
+                            alert('Connexion Google réussie !');
+                        }
                         
                         // Rediriger vers la page d'accueil
                         window.location.href = 'index.html';
@@ -255,19 +305,6 @@
                     alert('Erreur de connexion Google: ' + error.message + '\n\nEssayez en mode navigation privée ou avec un autre navigateur.');
                 }
             });
-            
-            // Vérifier si l'utilisateur est déjà connecté
-            if (window.ParisZikAuth) {
-                window.ParisZikAuth.checkAuthState((user) => {
-                    if (user) {
-                        console.log('Utilisateur déjà connecté:', user.email);
-                        // Rediriger vers la page d'accueil si déjà connecté
-                        window.location.href = 'index.html';
-                    } else {
-                        console.log('Aucun utilisateur connecté');
-                    }
-                });
-            }
         });
     </script>
     
