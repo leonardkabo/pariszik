@@ -8,6 +8,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Configuration et Initialisation -->
+    <script src="js/config.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/firebase.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,6 +22,7 @@
                 <h2>Accès Administrateur</h2>
                 <p>Veuillez entrer vos identifiants pour accéder au panel d'administration</p>
                 <p class="note">Utilisez le même email que votre compte Google, mais avec le mot de passe que vous avez créé lors de l'inscription.</p>
+                <div class="connection-status" id="connectionStatus">État de la connexion: Initialisation...</div>
             </div>
             
             <form id="adminAccessForm" class="auth-form">
@@ -43,6 +48,7 @@
             <div class="auth-footer">
                 <p><a href="index.html">← Retour à l'accueil</a></p>
                 <p class="help-text">Si vous n'avez pas de mot de passe, <a href="signup.html">créez un compte</a> avec votre email.</p>
+                <p class="help-text">Problème de connexion ? Essayez <a href="#" id="googleLoginBtn">la connexion Google</a>.</p>
             </div>
         </div>
     </div>
@@ -56,63 +62,96 @@
     </footer>
 
     <script>
-        // Configuration Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-            authDomain: "pariszik-6ced1.firebaseapp.com",
-            projectId: "pariszik-6ced1",
-            storageBucket: "pariszik-6ced1.firebasestorage.app",
-            messagingSenderId: "1065971112198",
-            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
-        };
-        
-        // Initialiser Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        // Gestion du formulaire d'accès admin
-        document.getElementById('adminAccessForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Page d\'accès admin chargée');
             
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
+            const connectionStatus = document.getElementById('connectionStatus');
+            const adminAccessForm = document.getElementById('adminAccessForm');
+            const submitBtn = adminAccessForm.querySelector('button[type="submit"]');
+            const googleLoginBtn = document.getElementById('googleLoginBtn');
             
-            // Afficher un indicateur de chargement
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Vérification en cours...';
-            submitBtn.disabled = true;
+            // Mettre à jour le statut de connexion
+            function updateConnectionStatus(status, message) {
+                if (connectionStatus) {
+                    connectionStatus.textContent = message;
+                    connectionStatus.className = 'connection-status ' + status;
+                }
+            }
             
-            // Se connecter avec Firebase
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then(async (userCredential) => {
-                    const user = userCredential.user;
+            try {
+                // Attendre l'initialisation de ParisZik
+                await window.ParisZikInit.initializeFirebase();
+                
+                // Mettre à jour le statut
+                const status = window.ParisZikInit.getStatus();
+                if (status.isOnline) {
+                    updateConnectionStatus('online', '✅ Connecté - Prêt à s\'authentifier');
+                } else {
+                    updateConnectionStatus('offline', '⚠️ Mode offline - Authentification limitée');
+                }
+                
+                console.log('Initialisation terminée:', status);
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation:', error);
+                updateConnectionStatus('error', '❌ Erreur d\'initialisation - Veuillez rafraîchir la page');
+            }
+            
+            // Gestion du formulaire d'accès admin
+            adminAccessForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('adminEmail').value;
+                const password = document.getElementById('adminPassword').value;
+                
+                // Validation basique
+                if (!email || !password) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+                
+                // Afficher un indicateur de chargement
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Vérification en cours...';
+                submitBtn.disabled = true;
+                
+                try {
+                    console.log('Tentative d\'accès admin pour:', email);
                     
-                    // Vérifier si l'utilisateur est admin
-                    const db = firebase.firestore();
-                    const userDoc = await db.collection("users").doc(user.uid).get();
-                    
-                    if (userDoc.exists && userDoc.data().role === 'admin') {
-                        console.log('Accès administrateur autorisé');
-                        
-                        // Stocker dans localStorage si "Se souvenir de moi" est coché
-                        if (document.getElementById('rememberAdmin').checked) {
-                            localStorage.setItem('adminAccess', 'true');
-                        }
-                        
-                        // Rediriger vers le panel d'administration
-                        alert('Accès administrateur autorisé !');
-                        window.location.href = 'admin.html';
-                    } else {
-                        // L'utilisateur n'est pas admin
-                        firebase.auth().signOut(); // Déconnecter l'utilisateur
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                        alert('Accès refusé : vous n\'avez pas les permissions administrateur.');
+                    // Initialiser l'authentification si ce n'est pas déjà fait
+                    if (!window.ParisZikAuth.initialized) {
+                        await window.ParisZikAuth.initialize();
                     }
-                })
-                .catch((error) => {
+                    
+                    // Se connecter
+                    const result = await window.ParisZikAuth.signIn(email, password);
+                    
+                    if (result.success) {
+                        console.log('Connexion réussie:', result.user.email);
+                        
+                        // Vérifier si l'utilisateur est admin
+                        const isAdmin = result.role === 'admin';
+                        
+                        if (isAdmin) {
+                            console.log('Accès administrateur autorisé');
+                            
+                            // Stocker dans localStorage si "Se souvenir de moi" est coché
+                            if (document.getElementById('rememberAdmin').checked) {
+                                localStorage.setItem('adminAccess', 'true');
+                            }
+                            
+                            // Rediriger vers le panel d'administration
+                            alert('Accès administrateur autorisé !');
+                            window.location.href = 'admin.html';
+                        } else {
+                            // L'utilisateur n'est pas admin
+                            await window.ParisZikAuth.signOut();
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                            alert('Accès refusé : vous n\'avez pas les permissions administrateur.');
+                        }
+                    }
+                } catch (error) {
                     console.error('Erreur de connexion:', error);
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
@@ -136,29 +175,93 @@
                     }
                     
                     alert(errorMessage);
+                }
+            });
+            
+            // Gestion de la connexion Google pour admin
+            if (googleLoginBtn) {
+                googleLoginBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    try {
+                        console.log('Tentative de connexion Google pour admin...');
+                        
+                        // Initialiser l'authentification si ce n'est pas déjà fait
+                        if (!window.ParisZikAuth.initialized) {
+                            await window.ParisZikAuth.initialize();
+                        }
+                        
+                        // Utiliser l'authentification ParisZik
+                        const result = await window.ParisZikAuth.signInWithGoogle();
+                        
+                        if (result.success) {
+                            console.log('Connexion Google réussie:', result.user.email);
+                            
+                            // Vérifier si l'utilisateur est admin
+                            const isAdmin = result.role === 'admin';
+                            
+                            if (isAdmin) {
+                                console.log('Accès administrateur autorisé via Google');
+                                alert('Accès administrateur autorisé via Google !');
+                                window.location.href = 'admin.html';
+                            } else {
+                                alert('Vous êtes connecté, mais vous n\'avez pas les permissions administrateur.');
+                                window.location.href = 'index.html';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erreur de connexion Google:', error);
+                        alert('Erreur de connexion Google: ' + error.message);
+                    }
                 });
-        });
-        
-        // Vérifier si l'utilisateur est déjà connecté comme admin
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // Vérifier si l'utilisateur est admin
-                const db = firebase.firestore();
-                db.collection("users").doc(user.uid).get()
-                    .then((doc) => {
-                        if (doc.exists && doc.data().role === 'admin') {
+            }
+            
+            // Vérifier si l'utilisateur est déjà connecté comme admin
+            if (window.ParisZikAuth) {
+                window.ParisZikAuth.checkAuthState(async function(user) {
+                    if (user) {
+                        // Récupérer le rôle depuis localStorage
+                        const userRole = localStorage.getItem('userRole');
+                        if (userRole === 'admin') {
                             // Rediriger directement vers le panel d'administration
+                            console.log('Redirection automatique vers le panel admin');
                             window.location.href = 'admin.html';
                         }
-                    })
-                    .catch((error) => {
-                        console.error('Erreur lors de la vérification des permissions:', error);
-                    });
+                    }
+                });
             }
         });
     </script>
     
     <style>
+        .connection-status {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .connection-status.offline {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .connection-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
         .note {
             background: #fff3cd;
             color: #856404;
@@ -181,6 +284,17 @@
         
         .help-text a:hover {
             text-decoration: underline;
+        }
+        
+        /* Animation de chargement */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        button[disabled] {
+            animation: pulse 1.5s infinite;
         }
     </style>
 </body>

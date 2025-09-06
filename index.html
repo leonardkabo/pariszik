@@ -14,7 +14,6 @@
     <script src="js/init.js"></script>
     <script src="js/firebase.js"></script>
     <script src="js/content.js"></script>
-    <script src="js/main.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -211,7 +210,7 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Page d\'accueil chargée');
             
             // Éléments du DOM
@@ -229,6 +228,14 @@
             const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
             const authButtons = document.getElementById('authButtons');
             
+            // Attendre l'initialisation de ParisZik
+            try {
+                await window.ParisZikInit.initializeFirebase();
+                console.log('ParisZik initialisé:', window.ParisZikInit.getStatus());
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation de ParisZik:', error);
+            }
+            
             // Vérifier l'état d'authentification
             if (window.ParisZikAuth) {
                 window.ParisZikAuth.checkAuthState(function(user) {
@@ -236,7 +243,6 @@
                 });
             } else {
                 console.error('ParisZikAuth non disponible');
-                // Fallback: afficher les boutons de connexion/inscription
                 showAuthButtons();
             }
             
@@ -244,10 +250,6 @@
             function updateUIBasedOnAuth(user) {
                 if (user) {
                     console.log('Utilisateur connecté:', user.email);
-                    
-                    // Cacher les boutons de connexion/inscription
-                    loginBtn.style.display = 'none';
-                    signupBtn.style.display = 'none';
                     
                     // Récupérer les informations depuis localStorage
                     const storedName = localStorage.getItem('userName');
@@ -264,6 +266,8 @@
                     sidebarUserAvatar.textContent = displayName.substring(0, 1).toUpperCase();
                     
                     // Afficher le menu utilisateur
+                    loginBtn.style.display = 'none';
+                    signupBtn.style.display = 'none';
                     userMenu.style.display = 'flex';
                     userMenu.style.alignItems = 'center';
                     userMenu.style.gap = '10px';
@@ -297,9 +301,12 @@
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', async function() {
                     try {
-                        await window.ParisZikAuth.signOut();
-                        console.log('Déconnexion réussie');
-                        location.reload(); // Recharger la page pour mettre à jour l'interface
+                        if (window.ParisZikAuth) {
+                            await window.ParisZikAuth.signOut();
+                            console.log('Déconnexion réussie');
+                        }
+                        // Recharger la page pour mettre à jour l'interface
+                        window.location.reload();
                     } catch (error) {
                         console.error('Erreur lors de la déconnexion:', error);
                         alert('Erreur lors de la déconnexion: ' + error.message);

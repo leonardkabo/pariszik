@@ -22,7 +22,7 @@
                 <div class="logo">Paris<span>Zik</span></div>
                 <h2>Se connecter</h2>
                 <p>Connectez-vous pour accéder à tous les contenus de la plateforme</p>
-                <div class="connection-status" id="connectionStatus">État de la connexion: Vérification...</div>
+                <div class="connection-status" id="connectionStatus">État de la connexion: Initialisation...</div>
             </div>
             
             <form id="loginForm" class="auth-form">
@@ -71,35 +71,65 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Page de connexion chargée');
             
             const connectionStatus = document.getElementById('connectionStatus');
+            const loginForm = document.getElementById('loginForm');
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
             
-            // Vérifier l'état de l'initialisation
-            if (window.ParisZikInit && window.ParisZikInit.initialized) {
-                connectionStatus.textContent = 'État de la connexion: ✅ Prêt';
-                connectionStatus.style.color = '#28a745';
-            } else {
-                connectionStatus.textContent = 'État de la connexion: ⚠️ Initialisation en cours';
-                connectionStatus.style.color = '#ffc107';
+            // Mettre à jour le statut de connexion
+            function updateConnectionStatus(status, message) {
+                if (connectionStatus) {
+                    connectionStatus.textContent = message;
+                    connectionStatus.className = 'connection-status ' + status;
+                }
+            }
+            
+            try {
+                // Attendre l'initialisation de ParisZik
+                await window.ParisZikInit.initializeFirebase();
+                
+                // Mettre à jour le statut
+                const status = window.ParisZikInit.getStatus();
+                if (status.isOnline) {
+                    updateConnectionStatus('online', '✅ Connecté - Prêt à se connecter');
+                } else {
+                    updateConnectionStatus('offline', '⚠️ Mode offline - Certaines fonctionnalités peuvent être limitées');
+                }
+                
+                console.log('Initialisation terminée:', status);
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation:', error);
+                updateConnectionStatus('error', '❌ Erreur d\'initialisation - Veuillez rafraîchir la page');
             }
             
             // Gestion du formulaire de connexion
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 
+                // Validation basique
+                if (!email || !password) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+                
                 // Afficher un indicateur de chargement
-                const submitBtn = this.querySelector('button[type="submit"]');
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Connexion en cours...';
                 submitBtn.disabled = true;
                 
                 try {
                     console.log('Tentative de connexion pour:', email);
+                    
+                    // Initialiser l'authentification si ce n'est pas déjà fait
+                    if (!window.ParisZikAuth.initialized) {
+                        await window.ParisZikAuth.initialize();
+                    }
                     
                     // Utiliser l'authentification ParisZik
                     const result = await window.ParisZikAuth.signIn(email, password);
@@ -143,7 +173,7 @@
                     
                     // Afficher un message d'erreur plus détaillé pour le mode admin
                     if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
-                        errorMessage += '\n\nNOTE ADMIN: Si vous utilisez Google pour vous connecter habituellement, veuillez utiliser le bouton "Se connecter avec Google" ci-dessous.';
+                        errorMessage += '\n\nNOTE ADMIN: Si vous utilisez Google pour vous connecter habituellement, veuillez utiliser le bouton "Se connecter avec Google" ci-dessous.\n\nSi le problème persiste, essayez en mode navigation privée ou avec un autre navigateur.';
                     }
                     
                     alert(errorMessage);
@@ -156,14 +186,28 @@
                 
                 const email = prompt('Veuillez entrer votre adresse email pour recevoir un lien de réinitialisation:');
                 if (email) {
-                    window.ParisZikAuth.resetPassword(email)
-                        .then(() => {
-                            alert('Un email de réinitialisation a été envoyé à ' + email);
-                        })
-                        .catch((error) => {
-                            console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
-                            alert('Erreur: ' + error.message);
+                    // Initialiser l'authentification si ce n'est pas déjà fait
+                    if (!window.ParisZikAuth.initialized) {
+                        window.ParisZikAuth.initialize().then(() => {
+                            window.ParisZikAuth.resetPassword(email)
+                                .then(() => {
+                                    alert('Un email de réinitialisation a été envoyé à ' + email);
+                                })
+                                .catch((error) => {
+                                    console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
+                                    alert('Erreur: ' + error.message);
+                                });
                         });
+                    } else {
+                        window.ParisZikAuth.resetPassword(email)
+                            .then(() => {
+                                alert('Un email de réinitialisation a été envoyé à ' + email);
+                            })
+                            .catch((error) => {
+                                console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
+                                alert('Erreur: ' + error.message);
+                            });
+                    }
                 }
             });
             
@@ -171,6 +215,11 @@
             document.querySelector('.google-btn').addEventListener('click', async function() {
                 try {
                     console.log('Tentative de connexion Google...');
+                    
+                    // Initialiser l'authentification si ce n'est pas déjà fait
+                    if (!window.ParisZikAuth.initialized) {
+                        await window.ParisZikAuth.initialize();
+                    }
                     
                     // Utiliser l'authentification ParisZik
                     const result = await window.ParisZikAuth.signInWithGoogle();
@@ -192,34 +241,63 @@
                     }
                 } catch (error) {
                     console.error('Erreur de connexion Google:', error);
-                    alert('Erreur de connexion Google: ' + error.message);
+                    alert('Erreur de connexion Google: ' + error.message + '\n\nEssayez en mode navigation privée ou avec un autre navigateur.');
                 }
             });
             
             // Vérifier si l'utilisateur est déjà connecté
-            window.ParisZikAuth.checkAuthState((user) => {
-                if (user) {
-                    console.log('Utilisateur déjà connecté:', user.email);
-                    // Rediriger vers la page d'accueil si déjà connecté
-                    window.location.href = 'index.html';
-                } else {
-                    console.log('Aucun utilisateur connecté');
-                    if (connectionStatus) {
-                        connectionStatus.textContent = 'État de la connexion: ✅ Prêt à se connecter';
-                        connectionStatus.style.color = '#28a745';
+            if (window.ParisZikAuth) {
+                window.ParisZikAuth.checkAuthState((user) => {
+                    if (user) {
+                        console.log('Utilisateur déjà connecté:', user.email);
+                        // Rediriger vers la page d'accueil si déjà connecté
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('Aucun utilisateur connecté');
                     }
-                }
-            });
+                });
+            }
         });
     </script>
     
     <style>
         .connection-status {
             margin: 1rem 0;
-            padding: 0.5rem;
-            border-radius: 5px;
-            font-size: 0.9rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
             font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .connection-status.offline {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .connection-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Animation de chargement */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        button[disabled] {
+            animation: pulse 1.5s infinite;
         }
     </style>
 </body>
