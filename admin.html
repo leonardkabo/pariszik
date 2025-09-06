@@ -17,6 +17,39 @@
     <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
     <link rel="apple-touch-icon" sizes="192x192" href="assets/images/icon-192.webp">
     <link rel="apple-touch-icon" sizes="512x512" href="assets/images/icon-512.webp">
+    <!-- Ajoutez ce code dans la section <head> de votre fichier admin.html -->
+<style>
+    /* Ajoutez ces styles pour améliorer l'affichage des fichiers uploadés */
+    .file-info {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .file-type {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+    
+    .file-type.audio {
+        background: #007bff;
+        color: white;
+    }
+    
+    .file-type.video {
+        background: #28a745;
+        color: white;
+    }
+    
+    .file-type.image {
+        background: #ffc107;
+        color: #212529;
+    }
+</style>
 </head>
 <body>
     <header>

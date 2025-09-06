@@ -11,6 +11,7 @@
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
     <script src="js/admin-auth.js"></script>
+    <script src="js/audio-player.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <!-- Favicon et icônes -->
     <link rel="icon" type="image/webp" href="assets/images/favicon.webp">
@@ -143,27 +144,45 @@
                 </div>
             </div>
         </section>
+    </main>
 
-        <div class="player">
-            <div class="container">
-                <div class="player-container">
-                    <img src="assets/images/default-cover.webp" alt="Now Playing" class="player-img">
-                    <div class="player-info">
-                        <h4 class="player-title">Aucun titre en lecture</h4>
-                        <p class="player-artist">-</p>
+    <!-- Audio Player -->
+    <div class="audio-player" id="audioPlayer">
+        <div class="player-container">
+            <div class="player-cover">
+                <img src="assets/images/default-cover.webp" alt="Now Playing" class="player-img">
+            </div>
+            <div class="player-info">
+                <h4 class="player-title">Aucun titre en lecture</h4>
+                <p class="player-artist">-</p>
+                <div class="player-progress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar"></div>
                     </div>
-                    <div class="player-controls">
-                        <button class="control-btn">⏮</button>
-                        <button class="control-btn">⏯</button>
-                        <button class="control-btn">⏭</button>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar"></div>
+                    <div class="progress-time">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
                     </div>
                 </div>
             </div>
+            <div class="player-controls">
+                <button class="control-btn" id="prevBtn">⏮</button>
+                <button class="control-btn" id="playBtn">▶</button>
+                <button class="control-btn" id="nextBtn">⏭</button>
+                <div class="volume-control">
+                    <button class="volume-btn" id="volumeBtn">🔊</button>
+                    <div class="volume-slider-container">
+                        <div class="volume-slider">
+                            <div class="volume-bar" id="volumeBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="player-actions">
+                <button class="favorite-btn" id="playerFavoriteBtn">❤️</button>
+            </div>
         </div>
-    </main>
+    </div>
 
     <footer>
         <div class="container">
@@ -214,6 +233,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Page d\'accueil chargée');
+            
+            // Initialiser le lecteur audio
+            window.AudioPlayer.init();
             
             // Éléments du DOM
             const loginBtn = document.getElementById('loginBtn');
@@ -362,7 +384,7 @@
                     <h3 class="card-title">${icon} ${content.title}</h3>
                     <p class="card-artist">👤 ${content.artist}</p>
                     <div class="card-actions">
-                        <button class="play-btn" data-id="${content.id}" data-title="${content.title}" data-artist="${content.artist}" title="Lire ce contenu">▶</button>
+                        <button class="play-btn" data-id="${content.id}" data-title="${content.title}" data-artist="${content.artist}" data-file-url="${content.fileUrl}" data-thumbnail-url="${thumbnailUrl}" title="Lire ce contenu">▶</button>
                         <button class="favorite-btn" data-id="${content.id}" title="Ajouter aux favoris">❤️</button>
                         ${content.isLive ? '<div class="live-badge-small">LIVE</div>' : ''}
                     </div>
@@ -372,47 +394,19 @@
             
             // Ajouter les gestionnaires d'événements
             card.querySelector('.play-btn').addEventListener('click', function() {
-                playContent(content);
+                const contentToPlay = {
+                    id: this.getAttribute('data-id'),
+                    title: this.getAttribute('data-title'),
+                    artist: this.getAttribute('data-artist'),
+                    fileUrl: this.getAttribute('data-file-url'),
+                    thumbnailUrl: this.getAttribute('data-thumbnail-url')
+                };
+                window.AudioPlayer.play(contentToPlay);
             });
             
             card.querySelector('.favorite-btn').addEventListener('click', function() {
                 toggleFavorite(content.id, this);
             });
-        }
-        
-        // Fonction pour jouer un contenu
-        function playContent(content) {
-            // Mettre à jour le player
-            const playerTitle = document.querySelector('.player-title');
-            const playerArtist = document.querySelector('.player-artist');
-            const playerImg = document.querySelector('.player-img');
-            
-            if (playerTitle && playerArtist && playerImg) {
-                playerTitle.textContent = content.title;
-                playerArtist.textContent = content.artist;
-                playerImg.src = content.thumbnailUrl || 'assets/images/default-cover.webp';
-            }
-            
-            // Simuler la lecture
-            alert(`Lecture de "${content.title}" par ${content.artist}`);
-            
-            // Incrémenter le nombre de vues
-            incrementViews(content.id);
-        }
-        
-        // Fonction pour incrémenter le nombre de vues
-        function incrementViews(contentId) {
-            try {
-                const contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
-                const contentIndex = contents.findIndex(c => c.id === contentId);
-                
-                if (contentIndex !== -1) {
-                    contents[contentIndex].views = (contents[contentIndex].views || 0) + 1;
-                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
-                }
-            } catch (error) {
-                console.error('Erreur lors de l\'incrémentation des vues:', error);
-            }
         }
         
         // Fonction pour ajouter/supprimer des favoris
@@ -435,6 +429,15 @@
                     }
                     
                     localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                    
+                    // Mettre à jour le bouton du lecteur si le contenu est en lecture
+                    if (window.AudioPlayer.currentContent && window.AudioPlayer.currentContent.id === contentId) {
+                        const playerFavoriteBtn = document.getElementById('playerFavoriteBtn');
+                        if (playerFavoriteBtn) {
+                            playerFavoriteBtn.textContent = contents[contentIndex].isFavorite ? '❤️' : '❤️';
+                            playerFavoriteBtn.style.color = contents[contentIndex].isFavorite ? '#dc3545' : '';
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Erreur lors de la gestion des favoris:', error);
@@ -502,20 +505,238 @@
         .favorite-btn {
             background: none;
             border: none;
-            font-size: 1.2rem;
+            color: #666;
+            font-size: 1.5rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .favorite-btn:hover {
-            transform: scale(1.2);
+            color: #dc3545;
+            transform: scale(1.1);
         }
         
-        /* Responsive adjustments */
+        .favorite-btn.active {
+            color: #dc3545;
+        }
+        
+        /* Audio Player Styles */
+        .audio-player {
+            background: var(--secondary);
+            color: var(--light);
+            padding: 1rem 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 999;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .player-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .player-cover {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+        
+        .player-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+        
+        .player-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .player-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-artist {
+            color: #ccc;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-progress {
+            margin: 0.8rem 0;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--highlight);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-top: 0.3rem;
+        }
+        
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .control-btn {
+            background: rgba(255,255,255,0.1);
+            color: var(--light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1.2rem;
+        }
+        
+        .control-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .volume-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .volume-btn:hover {
+            color: var(--highlight);
+        }
+        
+        .volume-slider-container {
+            position: relative;
+            width: 80px;
+            height: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .volume-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .volume-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--highlight);
+            border-radius: 5px;
+            width: 70%;
+        }
+        
+        .player-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .sidebar-logo, .footer-logo {
-                width: 40px;
-                height: 40px;
+            .player-container {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0 1rem;
+            }
+            
+            .player-cover {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .player-info {
+                flex: 1;
+            }
+            
+            .player-controls {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            .volume-control {
+                display: none;
+            }
+            
+            .player-actions {
+                flex: 0;
+            }
+            
+            .card-img-container {
+                height: 150px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .player-container {
+                gap: 0.3rem;
+            }
+            
+            .player-title {
+                font-size: 1rem;
+            }
+            
+            .player-artist {
+                font-size: 0.8rem;
+            }
+            
+            .control-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
             }
         }
     </style>
