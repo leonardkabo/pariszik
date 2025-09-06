@@ -45,7 +45,20 @@ class ParisZikInit {
             // Initialiser les services
             this.auth = firebase.auth();
             this.db = firebase.firestore();
-            this.storage = firebase.storage();
+            
+            // Initialiser Storage seulement si la fonction existe
+            try {
+                if (typeof firebase.storage === 'function') {
+                    this.storage = firebase.storage();
+                    console.log('Firebase Storage initialisé avec succès');
+                } else {
+                    console.warn('Firebase Storage non disponible - Fonctionalité de stockage désactivée');
+                    this.storage = null;
+                }
+            } catch (storageError) {
+                console.warn('Erreur lors de l\'initialisation de Firebase Storage:', storageError.message);
+                this.storage = null;
+            }
             
             // Configurer Firestore avec des paramètres plus tolérants
             this.db.settings({

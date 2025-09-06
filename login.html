@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
@@ -77,6 +76,7 @@
             const connectionStatus = document.getElementById('connectionStatus');
             const loginForm = document.getElementById('loginForm');
             const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const emailInput = document.getElementById('email');
             
             // Mettre à jour le statut de connexion
             function updateConnectionStatus(status, message) {
@@ -105,16 +105,40 @@
                 updateConnectionStatus('error', '❌ Erreur d\'initialisation - Veuillez rafraîchir la page');
             }
             
+            // Correction automatique de l'email
+            emailInput.addEventListener('blur', function() {
+                const email = this.value.toLowerCase().trim();
+                // Correction de l'orthographe courante
+                if (email.includes('kaabo') && email.includes('@gmail.com')) {
+                    this.value = 'leonardkabo32@gmail.com';
+                    alert('Correction automatique de l\'email: leonardkabo32@gmail.com');
+                }
+            });
+            
             // Gestion du formulaire de connexion
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const email = document.getElementById('email').value;
+                let email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
+                
+                // Correction automatique de l'email
+                email = email.toLowerCase().trim();
+                if (email.includes('kaabo') && email.includes('@gmail.com')) {
+                    email = 'leonardkabo32@gmail.com';
+                    document.getElementById('email').value = email;
+                }
                 
                 // Validation basique
                 if (!email || !password) {
                     alert('Veuillez remplir tous les champs');
+                    return;
+                }
+                
+                // Validation de l'email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    alert('Veuillez entrer une adresse email valide');
                     return;
                 }
                 
@@ -146,20 +170,28 @@
                             
                             // Mettre à jour le rôle dans Firestore
                             try {
-                                await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).set({
-                                    role: 'admin'
-                                }, { merge: true });
-                                console.log('Rôle admin attribué dans Firestore');
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    await services.db.collection("users").doc(result.user.uid).set({
+                                        role: 'admin',
+                                        email: email,
+                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                    }, { merge: true });
+                                    console.log('Rôle admin attribué dans Firestore');
+                                }
                             } catch (error) {
                                 console.warn('Erreur lors de la mise à jour du rôle dans Firestore:', error);
                             }
                         } else {
                             // Pour les autres utilisateurs, vérifier le rôle dans Firestore
                             try {
-                                const userDoc = await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).get();
-                                if (userDoc.exists) {
-                                    const userData = userDoc.data();
-                                    userRole = userData.role || 'user';
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    const userDoc = await services.db.collection("users").doc(result.user.uid).get();
+                                    if (userDoc.exists) {
+                                        const userData = userDoc.data();
+                                        userRole = userData.role || 'user';
+                                    }
                                 }
                             } catch (error) {
                                 console.warn('Erreur lors de la vérification du rôle:', error);
@@ -187,21 +219,25 @@
                     submitBtn.disabled = false;
                     
                     let errorMessage = 'Erreur de connexion: ';
-                    switch (error.code) {
-                        case 'auth/invalid-email':
-                            errorMessage += 'Email invalide.';
-                            break;
-                        case 'auth/user-disabled':
-                            errorMessage += 'Compte désactivé.';
-                            break;
-                        case 'auth/user-not-found':
-                            errorMessage += 'Aucun compte associé à cet email.';
-                            break;
-                        case 'auth/wrong-password':
-                            errorMessage += 'Mot de passe incorrect.';
-                            break;
-                        default:
-                            errorMessage += error.message;
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/invalid-email':
+                                errorMessage += 'Email invalide.';
+                                break;
+                            case 'auth/user-disabled':
+                                errorMessage += 'Compte désactivé.';
+                                break;
+                            case 'auth/user-not-found':
+                                errorMessage += 'Aucun compte associé à cet email. Vérifiez l\'orthographe de votre email.';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage += 'Mot de passe incorrect.';
+                                break;
+                            default:
+                                errorMessage += error.message;
+                        }
+                    } else {
+                        errorMessage += error.message || 'Erreur inconnue';
                     }
                     
                     alert(errorMessage);
@@ -264,20 +300,28 @@
                             
                             // Mettre à jour le rôle dans Firestore
                             try {
-                                await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).set({
-                                    role: 'admin'
-                                }, { merge: true });
-                                console.log('Rôle admin attribué dans Firestore');
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    await services.db.collection("users").doc(result.user.uid).set({
+                                        role: 'admin',
+                                        email: result.user.email,
+                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                    }, { merge: true });
+                                    console.log('Rôle admin attribué dans Firestore');
+                                }
                             } catch (error) {
                                 console.warn('Erreur lors de la mise à jour du rôle dans Firestore:', error);
                             }
                         } else {
                             // Pour les autres utilisateurs, vérifier le rôle dans Firestore
                             try {
-                                const userDoc = await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).get();
-                                if (userDoc.exists) {
-                                    const userData = userDoc.data();
-                                    userRole = userData.role || 'user';
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    const userDoc = await services.db.collection("users").doc(result.user.uid).get();
+                                    if (userDoc.exists) {
+                                        const userData = userDoc.data();
+                                        userRole = userData.role || 'user';
+                                    }
                                 }
                             } catch (error) {
                                 console.warn('Erreur lors de la vérification du rôle:', error);

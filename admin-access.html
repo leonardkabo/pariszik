@@ -47,7 +47,7 @@
             
             <div class="auth-footer">
                 <p><a href="index.html">← Retour à l'accueil</a></p>
-                <p class="help-text">Problème de connexion ? Contactez le support technique.</p>
+                <p class="help-text">Problème de connexion ? Vérifiez que votre email est correctement orthographié.</p>
             </div>
         </div>
     </div>
@@ -67,6 +67,7 @@
             const connectionStatus = document.getElementById('connectionStatus');
             const adminAccessForm = document.getElementById('adminAccessForm');
             const submitBtn = adminAccessForm.querySelector('button[type="submit"]');
+            const adminEmailInput = document.getElementById('adminEmail');
             
             // Mettre à jour le statut de connexion
             function updateConnectionStatus(status, message) {
@@ -95,16 +96,40 @@
                 updateConnectionStatus('error', '❌ Erreur d\'initialisation - Veuillez rafraîchir la page');
             }
             
+            // Correction automatique de l'email
+            adminEmailInput.addEventListener('blur', function() {
+                const email = this.value.toLowerCase().trim();
+                // Correction de l'orthographe courante
+                if (email.includes('kaabo') && email.includes('@gmail.com')) {
+                    this.value = 'leonardkabo32@gmail.com';
+                    alert('Correction automatique de l\'email: leonardkabo32@gmail.com');
+                }
+            });
+            
             // Gestion du formulaire d'accès admin
             adminAccessForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const email = document.getElementById('adminEmail').value;
+                let email = document.getElementById('adminEmail').value;
                 const password = document.getElementById('adminPassword').value;
+                
+                // Correction automatique de l'email
+                email = email.toLowerCase().trim();
+                if (email.includes('kaabo') && email.includes('@gmail.com')) {
+                    email = 'leonardkabo32@gmail.com';
+                    document.getElementById('adminEmail').value = email;
+                }
                 
                 // Validation basique
                 if (!email || !password) {
                     alert('Veuillez remplir tous les champs');
+                    return;
+                }
+                
+                // Validation de l'email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    alert('Veuillez entrer une adresse email valide');
                     return;
                 }
                 
@@ -131,20 +156,27 @@
                         if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
                             try {
                                 // Mettre à jour le rôle dans Firestore
-                                await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).set({
-                                    role: 'admin'
-                                }, { merge: true });
-                                
-                                // Mettre à jour le localStorage
-                                localStorage.setItem('userRole', 'admin');
-                                localStorage.setItem('userId', result.user.uid);
-                                localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
-                                
-                                console.log('Rôle admin attribué avec succès');
-                                
-                                // Rediriger vers le panel d'administration
-                                alert('Accès administrateur autorisé !');
-                                window.location.href = 'admin.html';
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    await services.db.collection("users").doc(result.user.uid).set({
+                                        role: 'admin',
+                                        email: email,
+                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                    }, { merge: true });
+                                    
+                                    // Mettre à jour le localStorage
+                                    localStorage.setItem('userRole', 'admin');
+                                    localStorage.setItem('userId', result.user.uid);
+                                    localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
+                                    
+                                    console.log('Rôle admin attribué avec succès');
+                                    
+                                    // Rediriger vers le panel d'administration
+                                    alert('Accès administrateur autorisé !');
+                                    window.location.href = 'admin.html';
+                                } else {
+                                    throw new Error('Firestore non disponible');
+                                }
                             } catch (error) {
                                 console.error('Erreur lors de la mise à jour du rôle admin:', error);
                                 alert('Erreur lors de la mise à jour du rôle admin: ' + error.message);
@@ -153,10 +185,13 @@
                             // Pour les autres utilisateurs, vérifier s'ils ont le rôle admin
                             let userRole = 'user';
                             try {
-                                const userDoc = await window.ParisZikInit.getServices().db.collection("users").doc(result.user.uid).get();
-                                if (userDoc.exists) {
-                                    const userData = userDoc.data();
-                                    userRole = userData.role || 'user';
+                                const services = window.ParisZikInit.getServices();
+                                if (services.db) {
+                                    const userDoc = await services.db.collection("users").doc(result.user.uid).get();
+                                    if (userDoc.exists) {
+                                        const userData = userDoc.data();
+                                        userRole = userData.role || 'user';
+                                    }
                                 }
                             } catch (error) {
                                 console.warn('Erreur lors de la vérification du rôle:', error);
@@ -186,21 +221,25 @@
                     submitBtn.disabled = false;
                     
                     let errorMessage = 'Erreur de connexion: ';
-                    switch (error.code) {
-                        case 'auth/invalid-email':
-                            errorMessage += 'Email invalide.';
-                            break;
-                        case 'auth/user-disabled':
-                            errorMessage += 'Compte désactivé.';
-                            break;
-                        case 'auth/user-not-found':
-                            errorMessage += 'Aucun compte associé à cet email.';
-                            break;
-                        case 'auth/wrong-password':
-                            errorMessage += 'Mot de passe incorrect.';
-                            break;
-                        default:
-                            errorMessage += error.message;
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/invalid-email':
+                                errorMessage += 'Email invalide.';
+                                break;
+                            case 'auth/user-disabled':
+                                errorMessage += 'Compte désactivé.';
+                                break;
+                            case 'auth/user-not-found':
+                                errorMessage += 'Aucun compte associé à cet email. Vérifiez l\'orthographe de votre email.';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage += 'Mot de passe incorrect.';
+                                break;
+                            default:
+                                errorMessage += error.message;
+                        }
+                    } else {
+                        errorMessage += error.message || 'Erreur inconnue';
                     }
                     
                     alert(errorMessage);
