@@ -130,7 +130,18 @@
                         console.log('Connexion réussie:', result.user.email);
                         
                         // Vérifier si l'utilisateur est admin
-                        const isAdmin = result.role === 'admin';
+                        let isAdmin = result.role === 'admin';
+                        
+                        // Forcer le rôle admin si c'est votre email
+                        if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
+                            try {
+                                await window.ParisZikAuth.forceAdminRole(email);
+                                isAdmin = true;
+                                console.log('Rôle admin forcé pour:', email);
+                            } catch (error) {
+                                console.warn('Erreur lors du forçage du rôle admin:', error);
+                            }
+                        }
                         
                         if (isAdmin) {
                             console.log('Accès administrateur autorisé');
@@ -198,7 +209,18 @@
                             console.log('Connexion Google réussie:', result.user.email);
                             
                             // Vérifier si l'utilisateur est admin
-                            const isAdmin = result.role === 'admin';
+                            let isAdmin = result.role === 'admin';
+                            
+                            // Forcer le rôle admin si c'est votre email
+                            if (result.user.email.toLowerCase() === 'leonardkabo32@gmail.com') {
+                                try {
+                                    await window.ParisZikAuth.forceAdminRole(result.user.email);
+                                    isAdmin = true;
+                                    console.log('Rôle admin forcé pour:', result.user.email);
+                                } catch (error) {
+                                    console.warn('Erreur lors du forçage du rôle admin:', error);
+                                }
+                            }
                             
                             if (isAdmin) {
                                 console.log('Accès administrateur autorisé via Google');
@@ -221,12 +243,61 @@
                 window.ParisZikAuth.checkAuthState(async function(user) {
                     if (user) {
                         // Récupérer le rôle depuis localStorage
-                        const userRole = localStorage.getItem('userRole');
-                        if (userRole === 'admin') {
+                        let userRole = localStorage.getItem('userRole');
+                        
+                        // Si le rôle n'est pas dans localStorage, le vérifier
+                        if (!userRole) {
+                            try {
+                                await window.ParisZikInit.initializeFirebase();
+                                const services = window.ParisZikInit.getServices();
+                                
+                                const userDoc = await services.db.collection("users").doc(user.uid).get();
+                                if (userDoc.exists) {
+                                    const userData = userDoc.data();
+                                    userRole = userData.role || 'user';
+                                    localStorage.setItem('userRole', userRole);
+                                } else {
+                                    // Si le document n'existe pas, créer avec le rôle admin si c'est votre email
+                                    const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                                    userRole = isAdmin ? 'admin' : 'user';
+                                    
+                                    await services.db.collection("users").doc(user.uid).set({
+                                        fullName: user.displayName || user.email.split('@')[0],
+                                        email: user.email,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        role: userRole,
+                                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                    
+                                    localStorage.setItem('userRole', userRole);
+                                }
+                            } catch (error) {
+                                console.warn('Erreur Firestore (mode dégradé):', error.message);
+                                // En mode dégradé, utiliser le rôle par défaut
+                                const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                                userRole = isAdmin ? 'admin' : 'user';
+                                localStorage.setItem('userRole', userRole);
+                            }
+                        }
+                        
+                        // Vérifier si l'utilisateur est admin
+                        const isAdmin = userRole === 'admin' || user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                        
+                        if (isAdmin) {
+                            // Forcer le rôle admin
+                            localStorage.setItem('userRole', 'admin');
+                            
                             // Rediriger directement vers le panel d'administration
                             console.log('Redirection automatique vers le panel admin');
                             window.location.href = 'admin.html';
+                        } else {
+                            console.log('Accès admin refusé - Rôle:', userRole);
+                            // Afficher le message d'accès refusé
+                            document.getElementById('adminStatus').textContent = '❌ Accès refusé - Rôle insuffisant';
                         }
+                    } else {
+                        console.log('Redirection vers la page de connexion');
+                        window.location.href = 'login.html';
                     }
                 });
             }

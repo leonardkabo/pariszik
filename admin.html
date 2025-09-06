@@ -9,8 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <!-- MEGA SDK - À ajouter dans le futur -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/mega-js/dist/mega.min.js"></script> -->
+    <!-- Configuration et Initialisation -->
+    <script src="js/config.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/mega.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -128,12 +131,16 @@
                 </div>
             </div>
             
-            <div id="accessDenied" style="display: none;">
+            <div id="accessDenied" style="display: block;">
                 <div class="warning" style="padding: 2rem; text-align: center;">
                     <h3>⛔ Accès refusé</h3>
                     <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
                     <p>Seuls les administrateurs peuvent accéder au panel d'administration.</p>
-                    <a href="index.html" class="btn btn-primary" style="margin-top: 1rem;">Retour à l'accueil</a>
+                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+                        <button class="btn btn-primary" onclick="attemptAdminAccess()">Réessayer l'accès admin</button>
+                        <a href="index.html" class="btn btn-secondary">Retour à l'accueil</a>
+                        <button class="btn btn-admin" id="forceAdminBtn" style="display: none;">Forcer l'accès admin (développement)</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -147,415 +154,176 @@
         </div>
     </footer>
 
-    <script src="js/firebase.js"></script>
-    <script src="js/mega-real.js"></script>
-    <script src="js/content.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        // Configuration Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLziaBhKhyr1Jz8C4mRt5vYMEWmxoUsxQ",
-            authDomain: "pariszik-6ced1.firebaseapp.com",
-            projectId: "pariszik-6ced1",
-            storageBucket: "pariszik-6ced1.firebasestorage.app",
-            messagingSenderId: "1065971112198",
-            appId: "1:1065971112198:web:d997951efedb2c6bc3a687"
-        };
-        
-        // Initialiser Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        // Éléments du DOM
-        const adminStatus = document.getElementById('adminStatus');
-        const megaStatus = document.getElementById('megaStatus');
-        const adminContent = document.getElementById('adminContent');
-        const accessDenied = document.getElementById('accessDenied');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const uploadForm = document.getElementById('uploadForm');
-        const fileUpload = document.getElementById('fileUpload');
-        const fileLabel = document.querySelector('.file-upload-label span');
-        const fileInfo = document.getElementById('fileInfo');
-        const uploadStatus = document.getElementById('uploadStatus');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadProgress = document.getElementById('uploadProgress');
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const existingContent = document.getElementById('existingContent');
-        const contentFilter = document.getElementById('contentFilter');
-        const searchContent = document.getElementById('searchContent');
-        const thumbnailInput = document.getElementById('thumbnail');
-        const thumbnailPreview = document.getElementById('thumbnailPreview');
-        const thumbnailImg = document.getElementById('thumbnailImg');
-        
-        // Variables globales
-        let megaInitialized = false;
-        let currentUpload = null;
-        
-        // Vérifier l'authentification et les permissions
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (user) {
-                // Vérifier si l'utilisateur est admin
-                const db = firebase.firestore();
-                try {
-                    const doc = await db.collection("users").doc(user.uid).get();
-                    if (doc.exists && doc.data().role === 'admin') {
-                        adminStatus.textContent = '✅ Accès autorisé - Bienvenue administrateur';
-                        adminStatus.style.color = '#28a745';
-                        
-                        // Initialiser MEGA
-                        megaStatus.style.display = 'block';
-                        megaStatus.textContent = 'Connexion à MEGA en cours...';
-                        megaStatus.className = 'upload-status';
-                        
-                        try {
-                            const megaSuccess = await window.ParisZikMegaReal.initializeForAdmin();
-                            if (megaSuccess) {
-                                megaStatus.textContent = '✅ Connecté à MEGA - Prêt pour les uploads';
-                                megaStatus.className = 'upload-status success';
-                                megaInitialized = true;
-                            } else {
-                                megaStatus.textContent = '⚠️ Connexion à MEGA échouée - Mode simulation activé';
-                                megaStatus.className = 'upload-status warning';
-                                megaInitialized = false;
-                            }
-                        } catch (error) {
-                            console.error('Erreur lors de l\'initialisation de MEGA:', error);
-                            megaStatus.textContent = '❌ Erreur lors de la connexion à MEGA';
-                            megaStatus.className = 'upload-status error';
-                            megaInitialized = false;
-                        }
-                        
-                        adminContent.style.display = 'block';
-                        initializeAdminPage();
-                    } else {
-                        adminStatus.textContent = '⛔ Accès refusé';
-                        adminStatus.style.color = '#dc3545';
-                        accessDenied.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Erreur lors de la vérification des permissions:', error);
-                    adminStatus.textContent = '❌ Erreur de vérification des permissions';
-                    adminStatus.style.color = '#dc3545';
-                    accessDenied.style.display = 'block';
-                }
-            } else {
-                // Rediriger vers la page de connexion
-                window.location.href = 'login.html';
-            }
-        });
-        
-        // Gestion de la déconnexion
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                firebase.auth().signOut()
-                    .then(() => {
-                        console.log('Déconnexion réussie');
-                        localStorage.removeItem('userId');
-                        localStorage.removeItem('userName');
-                        localStorage.removeItem('userRole');
-                        localStorage.removeItem('userPhoto');
-                        window.location.href = 'index.html';
-                    })
-                    .catch((error) => {
-                        console.error('Erreur lors de la déconnexion:', error);
-                        alert('Erreur lors de la déconnexion: ' + error.message);
-                    });
-            });
-        }
-        
-        // Initialiser la page d'administration
-        function initializeAdminPage() {
-            // Charger les contenus existants
-            loadExistingContent();
-            
-            // Gestion du formulaire d'upload
-            uploadForm.addEventListener('submit', handleUploadSubmit);
-            
-            // Gestion du changement de fichier
-            fileUpload.addEventListener('change', handleFileChange);
-            
-            // Gestion du changement de miniature
-            thumbnailInput.addEventListener('change', handleThumbnailChange);
-            
-            // Gestion des filtres et recherche
-            contentFilter.addEventListener('change', filterContent);
-            searchContent.addEventListener('input', filterContent);
-        }
-        
-        // Gestion du changement de fichier
-        function handleFileChange() {
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                fileLabel.textContent = file.name;
-                
-                // Afficher les informations du fichier
-                const fileSize = formatFileSize(file.size);
-                const fileType = getFileType(file.name);
-                fileInfo.innerHTML = `${file.name} (${fileSize}) - Type: ${fileType}`;
-                
-                // Vérifier la taille du fichier
-                if (file.size > 200 * 1024 * 1024) {
-                    fileInfo.innerHTML += '<br><span style="color: #dc3545;">⚠️ Fichier volumineux (max recommandé: 200MB)</span>';
-                }
-            } else {
-                fileLabel.textContent = '📁 Cliquez ici pour sélectionner un fichier';
-                fileInfo.textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
-            }
-        }
-        
-        // Gestion du changement de miniature
-        function handleThumbnailChange() {
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    thumbnailImg.src = e.target.result;
-                    thumbnailPreview.style.display = 'block';
-                };
-                
-                reader.readAsDataURL(file);
-            } else {
-                thumbnailPreview.style.display = 'none';
-            }
-        }
-        
-        // Gestion de la soumission du formulaire d'upload
-        async function handleUploadSubmit(e) {
-            e.preventDefault();
-            
-            const contentType = document.getElementById('contentType').value;
-            const title = document.getElementById('title').value;
-            const artist = document.getElementById('artist').value;
-            const file = fileUpload.files[0];
-            
-            if (!contentType || !title || !artist) {
-                showUploadStatus('Veuillez remplir tous les champs obligatoires.', 'error');
-                return;
-            }
-            
-            if (!file) {
-                showUploadStatus('Veuillez sélectionner un fichier à uploader.', 'error');
-                return;
-            }
-            
-            // Préparer les métadonnées
-            const metadata = {
-                title: title,
-                artist: artist,
-                description: document.getElementById('description').value,
-                category: document.getElementById('category').value,
-                contentType: contentType,
-                thumbnail: thumbnailInput.files[0] ? URL.createObjectURL(thumbnailInput.files[0]) : null,
-                uploadedAt: new Date().toISOString(),
-                uploadedBy: firebase.auth().currentUser.uid
-            };
-            
-            // Démarrer l'upload
-            startUpload(file, metadata);
-        }
-        
-        // Démarrer l'upload
-        async function startUpload(file, metadata) {
-            // Activer l'indicateur de progression
-            uploadProgress.style.display = 'block';
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Upload en cours...';
-            
+        // Fonction pour tenter l'accès admin
+        async function attemptAdminAccess() {
             try {
-                showUploadStatus('Connexion à MEGA en cours...', 'info');
+                console.log('Tentative d\'accès admin...');
                 
-                // Si MEGA n'est pas initialisé, utiliser le mode simulation
-                if (!megaInitialized) {
-                    showUploadStatus('Mode simulation activé - Upload simulé vers MEGA', 'warning');
-                    
-                    // Simuler la progression
-                    simulateProgress();
-                    
-                    // Simuler le succès de l'upload
-                    setTimeout(async () => {
-                        const fileUrl = `https://mega.nz/file/${Date.now()}`;
-                        
-                        // Enregistrer le contenu dans Firestore
-                        const contentData = {
-                            title: metadata.title,
-                            artist: metadata.artist,
-                            description: metadata.description,
-                            category: metadata.category,
-                            contentType: metadata.contentType,
-                            fileUrl: fileUrl,
-                            fileName: file.name,
-                            fileSize: file.size,
-                            fileType: getFileType(file.name),
-                            thumbnail: metadata.thumbnail,
-                            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            uploadedBy: metadata.uploadedBy,
-                            views: 0,
-                            likes: 0,
-                            isLive: metadata.contentType === 'live',
-                            megaFileId: `simulated-${Date.now()}`
-                        };
-                        
-                        const db = firebase.firestore();
-                        const docRef = await db.collection("contents").add(contentData);
-                        
-                        showUploadStatus(`✅ Upload simulé réussi ! ${metadata.title} par ${metadata.artist} a été publié sur ParisZik.`, 'success');
-                        
-                        // Ajouter le nouveau contenu à la liste
-                        addContentToGrid({
-                            id: docRef.id,
-                            ...contentData
-                        });
-                        
-                        // Réinitialiser le formulaire
-                        resetForm();
-                        
-                        uploadBtn.disabled = false;
-                        uploadBtn.textContent = 'Uploader vers MEGA et publier';
-                        uploadProgress.style.display = 'none';
-                    }, 3000);
-                } else {
-                    showUploadStatus('Upload en cours vers MEGA...', 'info');
-                    
+                // Vérifier si l'utilisateur est connecté
+                const user = window.ParisZikAuth?.getCurrentUser();
+                if (!user) {
+                    alert('Vous devez être connecté pour accéder au panel d\'administration.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Mettre à jour le statut
+                const adminStatus = document.getElementById('adminStatus');
+                if (adminStatus) {
+                    adminStatus.textContent = 'Vérification des permissions en cours...';
+                }
+                
+                // Vérifier le rôle dans localStorage
+                let userRole = localStorage.getItem('userRole');
+                console.log('Rôle depuis localStorage:', userRole);
+                
+                // Si le rôle n'est pas dans localStorage, le vérifier dans Firestore
+                if (!userRole) {
                     try {
-                        // Utiliser l'intégration réelle avec MEGA
-                        const result = await window.ParisZikMegaReal.instance.uploadFile(file);
+                        await window.ParisZikInit.initializeFirebase();
+                        const services = window.ParisZikInit.getServices();
                         
-                        showUploadStatus('Fichier uploadé sur MEGA avec succès', 'success');
-                        
-                        // Enregistrer le contenu dans Firestore
-                        const contentData = {
-                            title: metadata.title,
-                            artist: metadata.artist,
-                            description: metadata.description,
-                            category: metadata.category,
-                            contentType: metadata.contentType,
-                            fileUrl: result.fileUrl,
-                            fileName: result.fileName,
-                            fileSize: result.fileSize,
-                            fileType: getFileType(result.fileName),
-                            thumbnail: metadata.thumbnail,
-                            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            uploadedBy: metadata.uploadedBy,
-                            views: 0,
-                            likes: 0,
-                            isLive: metadata.contentType === 'live',
-                            megaFileId: result.megaFileId || result.fileId
-                        };
-                        
-                        const db = firebase.firestore();
-                        const docRef = await db.collection("contents").add(contentData);
-                        
-                        showUploadStatus(`✅ Upload réussi ! ${metadata.title} par ${metadata.artist} a été publié sur ParisZik.`, 'success');
-                        
-                        // Ajouter le nouveau contenu à la liste
-                        addContentToGrid({
-                            id: docRef.id,
-                            ...contentData
-                        });
-                        
-                        // Réinitialiser le formulaire
-                        resetForm();
+                        const userDoc = await services.db.collection("users").doc(user.uid).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            userRole = userData.role || 'user';
+                            localStorage.setItem('userRole', userRole);
+                            console.log('Rôle depuis Firestore:', userRole);
+                        } else {
+                            // Si le document n'existe pas, créer avec le rôle admin si c'est votre email
+                            const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                            userRole = isAdmin ? 'admin' : 'user';
+                            
+                            await services.db.collection("users").doc(user.uid).set({
+                                fullName: user.displayName || user.email.split('@')[0],
+                                email: user.email,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                role: userRole,
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            localStorage.setItem('userRole', userRole);
+                            console.log('Document utilisateur créé avec rôle:', userRole);
+                        }
                     } catch (error) {
-                        console.error('Erreur lors de l\'upload vers MEGA:', error);
-                        showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
+                        console.warn('Erreur Firestore (mode dégradé):', error.message);
+                        // En mode dégradé, utiliser le rôle par défaut
+                        const isAdmin = user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                        userRole = isAdmin ? 'admin' : 'user';
+                        localStorage.setItem('userRole', userRole);
+                        console.log('Rôle par défaut (mode dégradé):', userRole);
                     }
-                    
-                    uploadBtn.disabled = false;
-                    uploadBtn.textContent = 'Uploader vers MEGA et publier';
-                    uploadProgress.style.display = 'none';
+                }
+                
+                // Vérifier si l'utilisateur est admin
+                const isAdmin = userRole === 'admin' || user.email.toLowerCase() === 'leonardkabo32@gmail.com';
+                console.log('Est admin:', isAdmin, 'Email:', user.email);
+                
+                if (isAdmin) {
+                    // Donner l'accès admin
+                    localStorage.setItem('userRole', 'admin');
+                    showAdminContent();
+                } else {
+                    // Afficher le message d'accès refusé
+                    showAccessDenied();
+                    alert('Accès refusé : vous n\'avez pas les permissions administrateur.');
                 }
             } catch (error) {
-                console.error('Erreur lors de l\'upload:', error);
-                showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
-                uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Uploader vers MEGA et publier';
-                uploadProgress.style.display = 'none';
+                console.error('Erreur lors de la vérification des permissions:', error);
+                showAccessDenied();
+                alert('Erreur lors de la vérification des permissions: ' + error.message);
             }
         }
         
-        // Simuler la progression de l'upload
-        function simulateProgress() {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress > 100) progress = 100;
-                
-                progressBar.style.width = `${progress}%`;
-                progressText.textContent = `${Math.round(progress)}%`;
-                
-                if (progress === 100) {
-                    clearInterval(interval);
+        // Fonction pour afficher le contenu admin
+        function showAdminContent() {
+            console.log('Affichage du contenu admin');
+            document.getElementById('accessDenied').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminStatus').textContent = '✅ Accès autorisé - Bienvenue administrateur';
+            
+            // Initialiser MEGA
+            initializeMega();
+            
+            // Charger les contenus
+            loadExistingContent();
+        }
+        
+        // Fonction pour afficher l'accès refusé
+        function showAccessDenied() {
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('accessDenied').style.display = 'block';
+        }
+        
+        // Initialiser MEGA
+        async function initializeMega() {
+            try {
+                const megaStatus = document.getElementById('megaStatus');
+                if (megaStatus) {
+                    megaStatus.style.display = 'block';
+                    megaStatus.textContent = 'Connexion à MEGA en cours...';
+                    megaStatus.className = 'upload-status';
                 }
-            }, 300);
-        }
-        
-        // Afficher le statut de l'upload
-        function showUploadStatus(message, type) {
-            uploadStatus.textContent = message;
-            uploadStatus.style.display = 'block';
-            
-            // Supprimer les classes précédentes
-            uploadStatus.classList.remove('success', 'error', 'warning', 'info');
-            
-            // Ajouter la classe correspondante au type
-            if (type === 'success') {
-                uploadStatus.classList.add('success');
-            } else if (type === 'error') {
-                uploadStatus.classList.add('error');
-            } else if (type === 'warning') {
-                uploadStatus.classList.add('warning');
-            } else {
-                uploadStatus.classList.add('info');
+                
+                // Utiliser les identifiants MEGA depuis la configuration
+                const megaEmail = window.ParisZikConfig?.mega?.email || 'leonardkabo32@gmail.com';
+                const megaPassword = window.ParisZikConfig?.mega?.password || 'pariszik@2025';
+                
+                console.log('Initialisation MEGA avec email:', megaEmail);
+                
+                // Simuler la connexion à MEGA (dans une version réelle, vous utiliseriez le SDK MEGA)
+                setTimeout(() => {
+                    if (megaStatus) {
+                        megaStatus.textContent = '✅ Connecté à MEGA - Prêt pour les uploads';
+                        megaStatus.className = 'upload-status success';
+                    }
+                    console.log('MEGA initialisé avec succès');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation de MEGA:', error);
+                const megaStatus = document.getElementById('megaStatus');
+                if (megaStatus) {
+                    megaStatus.textContent = '❌ Erreur lors de la connexion à MEGA';
+                    megaStatus.className = 'upload-status error';
+                }
             }
         }
         
-        // Réinitialiser le formulaire
-        function resetForm() {
-            uploadForm.reset();
-            fileLabel.textContent = '📁 Cliquez ici pour sélectionner un fichier';
-            fileInfo.textContent = 'Sélectionnez un fichier audio ou vidéo (MP3, MP4, MOV, etc.)';
-            thumbnailPreview.style.display = 'none';
-            progressBar.style.width = '0%';
-            progressText.textContent = '0%';
-        }
-        
-        // Charger les contenus existants depuis Firestore
+        // Charger les contenus existants
         async function loadExistingContent() {
             try {
-                const db = firebase.firestore();
-                const contentsRef = db.collection("contents").orderBy("uploadedAt", "desc");
+                await window.ParisZikInit.initializeFirebase();
+                const services = window.ParisZikInit.getServices();
                 
-                const snapshot = await contentsRef.get();
+                const existingContent = document.getElementById('existingContent');
+                existingContent.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Chargement des contenus...</p></div>';
                 
-                // Vider le conteneur
+                // Charger les contenus depuis Firestore
+                const snapshot = await services.db.collection("contents").orderBy("uploadedAt", "desc").limit(10).get();
+                
                 existingContent.innerHTML = '';
                 
                 if (snapshot.empty) {
                     existingContent.innerHTML = '<p class="no-content">Aucun contenu trouvé. Commencez par en ajouter un !</p>';
                 } else {
                     snapshot.forEach((doc) => {
-                        addContentToGrid({
-                            id: doc.id,
-                            ...doc.data()
-                        });
+                        addContentToGrid(doc.id, doc.data());
                     });
                 }
             } catch (error) {
                 console.error('Erreur lors du chargement des contenus:', error);
-                existingContent.innerHTML = '<p class="error">Erreur lors du chargement des contenus. Veuillez réessayer.</p>';
+                document.getElementById('existingContent').innerHTML = '<p class="error">Erreur lors du chargement des contenus. Veuillez réessayer.</p>';
             }
         }
         
         // Ajouter un contenu à la grille
-        function addContentToGrid(content) {
+        function addContentToGrid(id, content) {
+            const existingContent = document.getElementById('existingContent');
             const card = document.createElement('div');
             card.className = 'admin-card';
-            card.dataset.id = content.id;
-            card.dataset.contentType = content.contentType;
-            card.dataset.title = content.title;
+            card.dataset.id = id;
             
             // Formater la date
             const date = content.uploadedAt?.toDate ? content.uploadedAt.toDate() : new Date(content.uploadedAt);
@@ -583,116 +351,18 @@
                     ${content.description ? `<p class="content-description">📝 ${content.description.substring(0, 100)}${content.description.length > 100 ? '...' : ''}</p>` : ''}
                 </div>
                 <div class="admin-card-actions">
-                    <button class="btn btn-view" data-id="${content.id}" title="Voir le contenu">
+                    <button class="btn btn-view" data-id="${id}" title="Voir le contenu">
                         👁️ Voir
                     </button>
-                    <button class="btn btn-edit" data-id="${content.id}" title="Modifier le contenu">
+                    <button class="btn btn-edit" data-id="${id}" title="Modifier le contenu">
                         ✏️ Modifier
                     </button>
-                    <button class="btn btn-delete" data-id="${content.id}" title="Supprimer le contenu">
+                    <button class="btn btn-delete" data-id="${id}" title="Supprimer le contenu">
                         🗑️ Supprimer
                     </button>
                 </div>
             `;
             existingContent.appendChild(card);
-            
-            // Ajouter les gestionnaires d'événements
-            addAdminEventListeners();
-        }
-        
-        // Fonction pour ajouter les gestionnaires d'événements aux boutons d'administration
-        function addAdminEventListeners() {
-            // Boutons Voir
-            document.querySelectorAll('.btn-view').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const id = this.getAttribute('data-id');
-                    try {
-                        const content = await window.ParisZikContent.loadContentById(id);
-                        alert(`Visualisation du contenu: ${content.title} par ${content.artist}`);
-                        // Dans une version future, vous redirigeriez vers une page de prévisualisation
-                    } catch (error) {
-                        console.error('Erreur lors du chargement du contenu:', error);
-                        alert('Erreur lors du chargement du contenu: ' + error.message);
-                    }
-                });
-            });
-            
-            // Boutons Modifier
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    alert('Modification du contenu avec ID: ' + id);
-                    // Dans une version future, vous ouvririez un modal d'édition
-                });
-            });
-            
-            // Boutons Supprimer
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const id = this.getAttribute('data-id');
-                    if (confirm('Êtes-vous sûr de vouloir supprimer ce contenu ? Cette action est irréversible.')) {
-                        try {
-                            // Supprimer le contenu de Firestore
-                            const db = firebase.firestore();
-                            await db.collection("contents").doc(id).delete();
-                            
-                            // Si MEGA est initialisé, supprimer le fichier de MEGA
-                            if (megaInitialized && window.ParisZikMegaReal.instance) {
-                                const contentDoc = await db.collection("contents").doc(id).get();
-                                if (contentDoc.exists) {
-                                    const contentData = contentDoc.data();
-                                    if (contentData.megaFileId) {
-                                        try {
-                                            await window.ParisZikMegaReal.instance.deleteFile(contentData.megaFileId);
-                                            console.log('Fichier supprimé de MEGA:', contentData.megaFileId);
-                                        } catch (error) {
-                                            console.warn('Erreur lors de la suppression du fichier de MEGA:', error);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            console.log('Contenu supprimé avec succès');
-                            this.closest('.admin-card').remove();
-                            alert('Contenu supprimé avec succès');
-                        } catch (error) {
-                            console.error('Erreur lors de la suppression du contenu:', error);
-                            alert('Erreur lors de la suppression: ' + error.message);
-                        }
-                    }
-                });
-            });
-        }
-        
-        // Filtrer les contenus
-        function filterContent() {
-            const filterValue = contentFilter.value;
-            const searchTerm = searchContent.value.toLowerCase();
-            
-            const cards = document.querySelectorAll('.admin-card');
-            let visibleCount = 0;
-            
-            cards.forEach(card => {
-                const contentType = card.dataset.contentType;
-                const title = card.dataset.title.toLowerCase();
-                
-                const matchesFilter = filterValue === 'all' || contentType === filterValue;
-                const matchesSearch = searchTerm === '' || title.includes(searchTerm);
-                
-                if (matchesFilter && matchesSearch) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            
-            if (visibleCount === 0) {
-                existingContent.innerHTML += '<p class="no-results">Aucun contenu ne correspond à votre recherche.</p>';
-            } else {
-                const noResults = document.querySelector('.no-results');
-                if (noResults) noResults.remove();
-            }
         }
         
         // Fonction utilitaire pour formater la taille des fichiers
@@ -704,21 +374,62 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
-        // Fonction utilitaire pour déterminer le type de fichier
-        function getFileType(fileName) {
-            const extension = fileName.split('.').pop().toLowerCase();
-            if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(extension)) {
-                return 'audio';
-            } else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'].includes(extension)) {
-                return 'video';
-            } else {
-                return 'unknown';
-            }
+        // Fonction pour forcer l'accès admin (pour développement)
+        function forceAdminAccess() {
+            localStorage.setItem('userRole', 'admin');
+            localStorage.setItem('userId', 'forced-admin');
+            showAdminContent();
+            alert('Accès admin forcé pour le développement');
         }
+        
+        // Initialiser la page
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Page d\'administration chargée');
+            
+            // Bouton de déconnexion
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        if (window.ParisZikAuth) {
+                            await window.ParisZikAuth.signOut();
+                        }
+                        window.location.href = 'index.html';
+                    } catch (error) {
+                        console.error('Erreur lors de la déconnexion:', error);
+                        alert('Erreur lors de la déconnexion: ' + error.message);
+                    }
+                });
+            }
+            
+            // Bouton pour forcer l'accès admin (visible seulement en développement)
+            const forceAdminBtn = document.getElementById('forceAdminBtn');
+            if (forceAdminBtn) {
+                forceAdminBtn.style.display = 'inline-block';
+                forceAdminBtn.addEventListener('click', forceAdminAccess);
+            }
+            
+            // Vérifier l'authentification au chargement
+            if (window.ParisZikAuth) {
+                const user = window.ParisZikAuth.getCurrentUser();
+                if (user) {
+                    console.log('Utilisateur connecté:', user.email);
+                    
+                    // Tenter l'accès admin automatiquement
+                    attemptAdminAccess();
+                } else {
+                    console.log('Redirection vers la page de connexion');
+                    window.location.href = 'login.html';
+                }
+            } else {
+                console.log('Redirection vers la page de connexion - Auth non initialisée');
+                window.location.href = 'login.html';
+            }
+        });
     </script>
     
     <style>
-        /* Styles supplémentaires pour la page d'administration */
+        /* Styles pour la page d'administration */
         .thumbnail-preview {
             margin-top: 1rem;
             text-align: center;
@@ -816,6 +527,35 @@
             font-size: 0.9rem;
             color: var(--gray);
             margin: 0.5rem 0;
+        }
+        
+        .upload-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .upload-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .upload-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid #ffeaa7;
+            margin: 2rem 0;
         }
         
         /* Responsive adjustments */

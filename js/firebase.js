@@ -315,6 +315,38 @@ class ParisZikAuth {
         return this.user || this.services?.auth?.currentUser || null;
     }
     
+    // Forcer le rôle admin pour un utilisateur spécifique
+    async forceAdminRole(email) {
+        if (!this.initialized) await this.initialize();
+        
+        try {
+            // Vérifier si l'utilisateur existe
+            const user = this.getCurrentUser();
+            if (!user || user.email.toLowerCase() !== email.toLowerCase()) {
+                throw new Error('Utilisateur non trouvé ou email non correspondant');
+            }
+            
+            // Mettre à jour le rôle dans Firestore
+            try {
+                await this.services.db.collection("users").doc(user.uid).set({
+                    role: 'admin'
+                }, { merge: true });
+                
+                console.log('Rôle admin forcé pour:', email);
+            } catch (firestoreError) {
+                console.warn('Erreur Firestore lors du forçage du rôle admin:', firestoreError.message);
+            }
+            
+            // Mettre à jour le localStorage
+            localStorage.setItem('userRole', 'admin');
+            
+            return { success: true, message: 'Rôle admin attribué avec succès' };
+        } catch (error) {
+            console.error('Erreur lors du forçage du rôle admin:', error);
+            throw error;
+        }
+    }
+    
     // Obtenir le statut
     getStatus() {
         return {

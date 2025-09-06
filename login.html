@@ -137,6 +137,17 @@
                     if (result.success) {
                         console.log('Connexion réussie:', result.user.email);
                         
+                        // Vérifier si l'utilisateur doit être admin
+                        if (email.toLowerCase() === 'leonardkabo32@gmail.com') {
+                            // Forcer le rôle admin
+                            try {
+                                await window.ParisZikAuth.forceAdminRole(email);
+                                console.log('Rôle admin forcé pour:', email);
+                            } catch (error) {
+                                console.warn('Erreur lors du forçage du rôle admin:', error);
+                            }
+                        }
+                        
                         // Stocker les informations dans le localStorage
                         localStorage.setItem('userId', result.user.uid);
                         localStorage.setItem('userName', result.user.displayName || result.user.email.split('@')[0]);
