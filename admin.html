@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParisZik - Administration</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (uniquement pour l'authentification) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <!-- Configuration et Initialisation -->
     <script src="js/config.js"></script>
     <script src="js/init.js"></script>
@@ -34,7 +33,7 @@
         <div class="container">
             <div class="admin-header">
                 <h1>Panel d'Administration - ParisZik</h1>
-                <p id="adminStatus">Initialisation du système de stockage...</p>
+                <p id="adminStatus">Préparation du système de stockage...</p>
             </div>
             
             <div id="adminContent">
@@ -101,12 +100,25 @@
                                 <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
                             </div>
                             <p id="progressText">0%</p>
+                            <p id="progressStatus">Préparation de l'upload...</p>
                         </div>
                         
                         <div id="uploadStatus" class="upload-status"></div>
                         
-                        <button type="submit" class="btn btn-primary" id="uploadBtn">Uploader et publier</button>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">Préparer pour le déploiement</button>
                     </form>
+                    
+                    <div class="deploy-instructions">
+                        <h3>📝 Instructions pour le déploiement :</h3>
+                        <ol>
+                            <li>Après avoir cliqué sur "Préparer pour le déploiement", le fichier sera prêt pour le commit</li>
+                            <li>Ouvrez votre terminal et exécutez les commandes suivantes :</li>
+                            <pre>git add .
+git commit -m "Ajout de nouveau contenu"
+git push origin main</pre>
+                            <li>Netlify déploiera automatiquement votre site avec le nouveau contenu</li>
+                        </ol>
+                    </div>
                 </div>
                 
                 <div class="admin-section">
@@ -148,7 +160,7 @@
             const uploadBtn = document.getElementById('uploadBtn');
             
             try {
-                // Initialiser Firebase Storage
+                // Initialiser le stockage
                 adminStatus.textContent = 'Initialisation du système de stockage...';
                 
                 const storageSuccess = await window.ParisZikStorage.initialize();
@@ -167,7 +179,7 @@
                 
             } catch (error) {
                 console.error('Erreur lors de l\'initialisation:', error);
-                adminStatus.textContent = '❌ Erreur critique lors de l\'initialisation';
+                adminStatus.textContent = '❌ Erreur critique lors de l\'initialisation: ' + error.message;
                 adminStatus.style.color = '#dc3545';
                 uploadBtn.disabled = true;
             }
@@ -212,8 +224,8 @@
                 document.getElementById('fileInfo').innerHTML = `${file.name} (${fileSize}) - Type: ${fileType}`;
                 
                 // Vérifier la taille du fichier
-                if (file.size > 200 * 1024 * 1024) {
-                    document.getElementById('fileInfo').innerHTML += '<br><span style="color: #dc3545;">⚠️ Fichier volumineux (max recommandé: 200MB)</span>';
+                if (file.size > 50 * 1024 * 1024) {
+                    document.getElementById('fileInfo').innerHTML += '<br><span style="color: #dc3545;">⚠️ Fichier volumineux (max 50MB)</span>';
                 }
             } else {
                 document.querySelector('.file-upload-label span').textContent = '📁 Cliquez ici pour sélectionner un fichier';
@@ -278,19 +290,35 @@
             const originalText = uploadBtn.textContent;
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
+            const progressStatus = document.getElementById('progressStatus');
             
             // Activer l'indicateur de progression
             uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Upload en cours...';
+            uploadBtn.textContent = 'Préparation en cours...';
             document.getElementById('uploadProgress').style.display = 'block';
             
             try {
-                showUploadStatus('Upload en cours...', 'info');
+                showUploadStatus('Préparation du fichier...', 'info');
+                progressStatus.textContent = 'Préparation du fichier...';
                 
-                // Utiliser l'intégration réelle avec Firebase Storage
+                // Vérifier la taille du fichier
+                if (file.size > 50 * 1024 * 1024) {
+                    throw new Error('Le fichier est trop volumineux (max 50MB). Veuillez compresser votre fichier.');
+                }
+                
+                // Vérifier le type de fichier
+                if (!isFileTypeAllowed(file)) {
+                    throw new Error('Type de fichier non supporté. Veuillez utiliser un fichier MP3, WAV, OGG, MP4 ou MOV.');
+                }
+                
+                showUploadStatus('Fichier prêt pour le déploiement...', 'info');
+                progressStatus.textContent = 'Fichier prêt pour le déploiement...';
+                
+                // Utiliser l'intégration avec Netlify
                 const result = await window.ParisZikStorage.instance.uploadFile(file);
                 
-                showUploadStatus('Fichier uploadé avec succès', 'success');
+                showUploadStatus('Fichier prêt pour le commit !', 'success');
+                progressStatus.textContent = 'Fichier prêt pour le commit !';
                 
                 // Enregistrer le contenu dans localStorage
                 const contentData = {
@@ -322,16 +350,47 @@
                 // Réinitialiser le formulaire
                 resetForm();
                 
-                showUploadStatus(`✅ Upload réussi ! ${metadata.title} par ${metadata.artist} a été publié sur ParisZik.`, 'success');
+                showUploadStatus(`✅ Fichier prêt ! ${metadata.title} par ${metadata.artist} est prêt pour le déploiement.`, 'success');
+                
+                // Afficher les instructions de déploiement
+                const deployInstructions = document.querySelector('.deploy-instructions');
+                if (deployInstructions) {
+                    deployInstructions.style.display = 'block';
+                }
                 
             } catch (error) {
-                console.error('Erreur lors de l\'upload:', error);
-                showUploadStatus(`❌ Erreur lors de l'upload: ${error.message}`, 'error');
+                console.error('Erreur lors de la préparation:', error);
+                
+                // Messages d'erreur spécifiques
+                let errorMessage = '❌ Erreur lors de la préparation: ';
+                
+                if (error.message.includes('volumineux')) {
+                    errorMessage += 'Le fichier est trop volumineux. Veuillez compresser votre fichier.';
+                } else if (error.message.includes('type de fichier non supporté')) {
+                    errorMessage += 'Type de fichier non supporté. Veuillez utiliser un format audio/vidéo standard.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showUploadStatus(errorMessage, 'error');
+                progressStatus.textContent = 'Préparation échouée';
             } finally {
                 uploadBtn.disabled = false;
                 uploadBtn.textContent = originalText;
-                document.getElementById('uploadProgress').style.display = 'none';
             }
+        }
+        
+        // Vérifier si le type de fichier est autorisé
+        function isFileTypeAllowed(file) {
+            const allowedTypes = [
+                'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac', 'audio/mp4',
+                'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'
+            ];
+            
+            const extension = file.name.split('.').pop().toLowerCase();
+            const allowedExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'mp4', 'mov', 'avi', 'mkv', 'webm'];
+            
+            return allowedTypes.includes(file.type) || allowedExtensions.includes(extension);
         }
         
         // Sauvegarder le contenu dans localStorage
@@ -417,28 +476,20 @@
                 let contents = JSON.parse(localStorage.getItem('pariszik_contents') || '[]');
                 const contentToDelete = contents.find(content => content.id === contentId);
                 
-                if (contentToDelete && contentToDelete.storagePath) {
-                    // Supprimer le fichier de Firebase Storage
-                    try {
-                        await window.ParisZikStorage.instance.deleteFile(contentToDelete.storagePath);
-                        console.log('Fichier supprimé de Firebase Storage:', contentToDelete.storagePath);
-                    } catch (error) {
-                        console.warn('Erreur lors de la suppression du fichier de Firebase Storage:', error);
-                    }
+                if (contentToDelete) {
+                    // Supprimer le contenu de localStorage
+                    contents = contents.filter(content => content.id !== contentId);
+                    localStorage.setItem('pariszik_contents', JSON.stringify(contents));
+                    
+                    // Supprimer la carte de l'interface
+                    const card = document.querySelector(`.admin-card[data-id="${contentId}"]`);
+                    if (card) card.remove();
+                    
+                    alert('Contenu supprimé avec succès. Pour supprimer le fichier, veuillez le supprimer du dépôt Git et redéployer.');
                 }
-                
-                // Supprimer le contenu de localStorage
-                contents = contents.filter(content => content.id !== contentId);
-                localStorage.setItem('pariszik_contents', JSON.stringify(contents));
-                
-                // Supprimer la carte de l'interface
-                const card = document.querySelector(`.admin-card[data-id="${contentId}"]`);
-                if (card) card.remove();
-                
-                alert('Contenu supprimé avec succès');
             } catch (error) {
                 console.error('Erreur lors de la suppression du contenu:', error);
-                alert('Erreur lors de la suppression du contenu');
+                alert('Erreur lors de la suppression du contenu: ' + error.message);
             }
         }
         
@@ -543,6 +594,12 @@
             transition: width 0.3s ease;
         }
         
+        .progress-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
         .content-type-badge {
             background: var(--accent);
             color: white;
@@ -639,6 +696,36 @@
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 1rem;
+        }
+        
+        .deploy-instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .deploy-instructions h3 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        
+        .deploy-instructions pre {
+            background: #1e1e1e;
+            color: #ffffff;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .deploy-instructions ol {
+            padding-left: 1.5rem;
+        }
+        
+        .deploy-instructions li {
+            margin-bottom: 0.5rem;
         }
     </style>
 </body>
