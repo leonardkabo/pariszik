@@ -1,0 +1,17 @@
+# netlify.toml
+
+[build]
+  publish = "/"
+  functions = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[dev]
+  functions = "netlify/functions"
+  publish = "/"
+  auto = true

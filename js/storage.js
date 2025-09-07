@@ -1,23 +1,21 @@
-// Intégration avec Netlify Large Media pour ParisZik
+// Intégration avec Netlify Functions pour ParisZik
 
-class NetlifyStorage {
+class NetlifyFunctionsStorage {
     constructor() {
         this.isInitialized = true;
-        this.baseUrl = '';
         this.maxFileSize = 50 * 1024 * 1024; // 50MB
         this.allowedTypes = [
             'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac', 'audio/mp4',
             'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm',
             'image/jpeg', 'image/png', 'image/gif', 'image/webp'
         ];
+        this.uploadEndpoint = '/.netlify/functions/upload';
     }
     
     // Initialiser le stockage
     async initialize() {
         try {
-            // Déterminer l'URL de base
-            this.baseUrl = window.location.origin;
-            console.log('Netlify Storage initialisé avec succès');
+            console.log('Netlify Functions Storage initialisé avec succès');
             return true;
         } catch (error) {
             console.error('Erreur lors de l\'initialisation:', error);
@@ -25,7 +23,7 @@ class NetlifyStorage {
         }
     }
     
-    // Upload d'un fichier vers Netlify
+    // Upload d'un fichier vers Netlify Functions
     async uploadFile(file, folderName = 'uploads') {
         try {
             // Vérifier la taille du fichier
@@ -38,31 +36,46 @@ class NetlifyStorage {
                 throw new Error('Type de fichier non supporté.');
             }
             
-            // Créer un nom de fichier unique
-            const fileName = `${folderName}/${Date.now()}_${this.sanitizeFileName(file.name)}`;
+            // Lire le fichier comme ArrayBuffer
+            const arrayBuffer = await this.readFileAsArrayBuffer(file);
             
-            // Créer un FormData pour l'upload
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('fileName', fileName);
+            // Convertir en base64
+            const base64String = this.arrayBufferToBase64(arrayBuffer);
             
-            // Simuler l'upload (dans la réalité, vous devriez créer une fonction de build)
-            console.log('Fichier prêt pour le déploiement:', fileName);
+            // Préparer les données pour l'upload
+            const uploadData = {
+                file: base64String,
+                fileName: file.name,
+                folderName: folderName
+            };
             
-            // Retourner l'URL du fichier (après déploiement)
-            const fileUrl = `${this.baseUrl}/${fileName}`;
+            // Envoyer la requête à la fonction Netlify
+            const response = await fetch(this.uploadEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(uploadData)
+            });
             
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Erreur lors de l\'upload');
+            }
+            
+            // Retourner les informations du fichier
             return {
                 success: true,
-                message: 'Fichier prêt pour le déploiement',
-                fileUrl: fileUrl,
-                fileName: file.name,
-                fileSize: file.size,
+                message: result.message,
+                fileUrl: result.fileUrl,
+                fileName: result.fileName,
+                fileSize: result.fileSize,
                 uploadDate: new Date().toISOString(),
-                storagePath: fileName
+                storagePath: result.fileUrl
             };
         } catch (error) {
-            console.error('Erreur lors de la préparation de l\'upload:', error);
+            console.error('Erreur lors de l\'upload:', error);
             throw error;
         }
     }
@@ -79,12 +92,25 @@ class NetlifyStorage {
         return allowedExtensions.includes(extension);
     }
     
-    // Nettoyer le nom de fichier
-    sanitizeFileName(fileName) {
-        return fileName
-            .replace(/[^\w\-.]/g, '_')
-            .replace(/_{2,}/g, '_')
-            .substring(0, 255);
+    // Lire un fichier comme ArrayBuffer
+    readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    
+    // Convertir un ArrayBuffer en base64
+    arrayBufferToBase64(buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
     }
     
     // Formater la taille des fichiers
@@ -96,36 +122,36 @@ class NetlifyStorage {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
-    // Supprimer un fichier (simulé - dans la réalité, vous devriez supprimer du dépôt)
+    // Supprimer un fichier (simulé)
     async deleteFile(filePath) {
-        console.log('Pour supprimer un fichier, veuillez le supprimer du dépôt Git et redéployer.');
+        console.log('Pour supprimer un fichier, veuillez le supprimer manuellement du dépôt.');
         return {
             success: true,
-            message: 'Fichier marqué pour suppression (supprimez du dépôt Git)',
+            message: 'Fichier marqué pour suppression',
             filePath: filePath
         };
     }
 }
 
-// Créer une instance de l'intégration Netlify
-const netlifyStorage = new NetlifyStorage();
+// Créer une instance de l'intégration Netlify Functions
+const netlifyFunctionsStorage = new NetlifyFunctionsStorage();
 
 // Fonction pour initialiser le stockage
 async function initializeStorage() {
     try {
-        await netlifyStorage.initialize();
-        console.log('Netlify Storage initialisé avec succès');
+        await netlifyFunctionsStorage.initialize();
+        console.log('Netlify Functions Storage initialisé avec succès');
         return true;
     } catch (error) {
-        console.error('Erreur lors de l\'initialisation de Netlify Storage:', error);
+        console.error('Erreur lors de l\'initialisation de Netlify Functions Storage:', error);
         return false;
     }
 }
 
 // Exporter l'instance et les fonctions
 window.ParisZikStorage = {
-    instance: netlifyStorage,
+    instance: netlifyFunctionsStorage,
     initialize: initializeStorage
 };
 
-console.log('Intégration Netlify Storage chargée');
+console.log('Intégration Netlify Functions Storage chargée');
